@@ -1,0 +1,31 @@
+version: '3.7'
+
+services:
+  db:
+    image: postgres:10-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test
+  elastic:
+    image: library/elasticsearch:7.10.1
+    environment:
+      - discovery.type=single-node
+  web:
+    build: .
+    init: true
+    entrypoint: /tmp/entrypoint.sh
+    command: gunicorn -b 0.0.0.0:${PORT-3000} --access-logfile - --error-logfile - --log-level info -k gevent webservices.rest:app
+    environment:
+      - PORT
+      - SENTRY_DSN
+      - WAFP_RUN_ID
+      - SQLA_SAMPLE_DB_CONN=postgresql://test:test@db/test
+      - SQLA_CONN=postgresql://test:test@db/test
+    volumes:
+      - .:/tmp
+    ports:
+      - "${PORT-3000}:${PORT-3000}"
+    depends_on:
+      - db
+      - elastic

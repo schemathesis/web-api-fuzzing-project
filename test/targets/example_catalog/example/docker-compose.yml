@@ -1,0 +1,7 @@
+version: '3'
+services:
+  web:
+    build: .
+    init: true
+    ports:
+      - '${PORT-3000}:80'

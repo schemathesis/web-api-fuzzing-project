@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    init: true
+    environment:
+      - PORT
+    ports:
+      - "${PORT-3000}:7672"

@@ -1,0 +1,23 @@
+version: '3'
+services:
+  db:
+    image: postgres:alpine
+    environment:
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test
+  web:
+    build: .
+    init: true
+    entrypoint: /tmp/entrypoint.sh
+    command: python backend/run.py
+    volumes:
+      - .:/tmp
+    environment:
+      - PORT
+      - SENTRY_DSN
+      - WAFP_RUN_ID
+      - DATABASE_URL=postgresql://postgres:test@db/test
+    ports:
+      - '${PORT-3000}:8080'
+    depends_on:
+      - db

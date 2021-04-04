@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "wafp"
+version = "0.1.0"
+description = ""
+authors = ["Dmitry Dygalo <dadygalo@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+attrs = "^20.3.0"
+structlog = "^21.1.0"
+colorama = "^0.4.4"
+docker-compose = ">=1.28.0"
+requests = "^2.25.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.2"
+coverage = "^5.5"
+
+[tool.poetry.scripts]
+targets = "wafp.targets.cli:main"
+
+[tool.black]
+line-length = 120
+target_version = ["py38"]
+
+[tool.isort]
+# config compatible with Black
+line_length = 120
+multi_line_output = 3
+default_section = "THIRDPARTY"
+include_trailing_comma = true
+known_third_party = []
+
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

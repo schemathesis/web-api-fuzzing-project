@@ -1,0 +1,129 @@
+---
+openapi: 3.0.3
+info:
+  title: Otto Parser Service
+  description: |
+    This specification describes the Otto Parser service which is responsible
+    for ingesting Otto Pipeline syntax (typically .otto files) and outputs
+    the internal Otto intermediate representation.
+  version: '1.0.0'
+  contact:
+    name: R Tyler Croy
+    email: 'rtyler@brokenco.de'
+    x-twitter: agentdero
+  license:
+    name: 'GNU AGPL 3.0'
+    url: 'https://www.gnu.org/licenses/agpl-3.0.en.html'
+externalDocs:
+  description: 'Find out more about Otto'
+  url: 'https://github.com/rtyler/otto'
+servers:
+  - url: 'http://localhost:7672'
+    description: 'Local dev server'
+paths:
+  '/health':
+    get:
+      operationId: GetHealth
+      description: |
+        The health endpoint helps indicate whether the service is healthy or not.
+        Any non-200 response is unhealthy.
+      responses:
+        '200':
+          description: 'A successful healthcheck'
+          content:
+            'application/json': {}
+
+  '/v1/parse':
+    post:
+      operationId: ParsePipeline
+      description: |
+        The primary interface for the parser service which takes an uploaded Otto
+        Pipeline string and will attempt to parse the pipeline into an intermediate
+        representation which other parts of Otto can work with.
+      requestBody:
+        description: 'A string payload in the Otto Pipeline syntax'
+        required: true
+        content:
+          'text/plain':
+            schema:
+              type: string
+            examples:
+              success:
+                summary: 'Simple Pipeline'
+                value: |
+                  pipeline {
+                        stage {
+                            name = 'Build'
+                            steps {
+                                sh 'ls'
+                            }
+                        }
+                    }
+
+      responses:
+        '200':
+          description: 'Successfully parsed'
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ParsePipelineResponse'
+        '400':
+          description: 'Failed to parse the pipeline for some reason'
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ParsePipelineFailure'
+        '422':
+          description: 'Unprocessable data, usually non-UTF-6 encoded'
+
+components:
+  schemas:
+    ParsePipelineResponse:
+      description: |
+        This response is passed on a successful parse of the provided pipeline
+      type: object
+      required:
+        - uuid
+        - batches
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        contexts:
+          type: array
+        steps:
+          type: array
+      example:
+        summary: 'A simplistic Pipeline'
+        value:
+          uuid: '9edc4483-a78a-480f-8e06-2726db1ddf24'
+          batches:
+            - mode: Linear
+              contexts:
+                - uuid: '8109f601-12e8-4621-96c6-11baff409d93'
+                  properties:
+                    name: 'Build'
+                  steps:
+                    - uuid: '6193b9b1-c6be-4c18-9bb8-1aeead5e7d14'
+                      context: '8109f601-12e8-4621-96c6-11baff409d93'
+                      symbol: 'sh'
+                      parameters:
+                        - 'ls'
+
+    ParsePipelineFailure:
+      type: object
+      example:
+      required:
+        - variant
+        - line
+        - column
+      properties:
+        variant:
+          description: 'Parser error variant'
+          type: string
+        line:
+          description: 'The line within the input stream where the error was detected.'
+          type: number
+        column:
+          description: 'The column within the line of the error.'
+          type: number

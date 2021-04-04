@@ -1,0 +1,9 @@
+version: '3'
+services:
+  web:
+    image: darklynx/request-baskets:v1.1.0
+    init: true
+    environment:
+      - PORT
+    ports:
+      - '${PORT-3000}:${PORT-3000}'

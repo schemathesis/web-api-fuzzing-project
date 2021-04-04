@@ -1,0 +1,87 @@
+version: '3'
+services:
+  db:
+    image: postgres:10.3-alpine
+    environment:
+      POSTGRES_DB: "openledger"
+      POSTGRES_USER: "deploy"
+      POSTGRES_PASSWORD: "deploy"
+      POSTGRES_HOST: "0.0.0.0"
+    healthcheck:
+      test: "pg_isready -U deploy -d openledger"
+
+  thumbs:
+    image: willnorris/imageproxy
+    ports:
+      - "8222:8222"
+    command: ["-addr", "0.0.0.0:8222"]
+
+  upstream_db:
+    image: postgres:10.3-alpine
+    environment:
+      POSTGRES_DB: "openledger"
+      POSTGRES_USER: "deploy"
+      POSTGRES_PASSWORD: "deploy"
+      POSTGRES_HOST: "0.0.0.0"
+    healthcheck:
+      test: "pg_isready -U deploy -d openledger"
+
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.1.0
+    ports:
+      - "9200:9200"
+    environment:
+      # disable XPack
+      # https://www.elastic.co/guide/en/elasticsearch/reference/5.3/docker.html#_security_note
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+    healthcheck:
+      test: ["CMD-SHELL", "curl -si -XGET 'localhost:9200/_cluster/health?pretty' | grep -qE 'yellow|green'"]
+      interval: 10s
+      timeout: 60s
+      retries: 10
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  web:
+    build:
+      context: .
+    init: true
+    image: cccatalog_api
+    entrypoint: /tmp/entrypoint.sh
+    command: python manage.py runserver 0.0.0.0:${PORT-3000}
+    volumes:
+      - .:/tmp
+    ports:
+      - "${PORT-3000}:${PORT-3000}"
+    depends_on:
+      - db
+      - es
+      - cache
+    environment:
+      - LOAD_BALANCER_URL=0.0.0.0  # Hack to add 0.0.0.0 to ALLOWED_HOSTS
+      - DJANGO_DATABASE_NAME=openledger
+      - DJANGO_DATABASE_USER=deploy
+      - DJANGO_DATABASE_PASSWORD=deploy
+      - DJANGO_DATABASE_HOST=db
+      - UPSTREAM_DATABASE_HOST=upstream_db
+      - PYTHONUNBUFFERED=0
+      - DJANGO_DEBUG_ENABLED=True
+      - ELASTICSEARCH_URL=es
+      - ELASTICSEARCH_PORT=9200
+      - DISABLE_GLOBAL_THROTTLING=True
+      - ROOT_SHORTENING_URL=localhost:8000
+      - THUMBNAIL_PROXY_URL=http://thumbs:8222
+      - DJANGO_SECRET_KEY=ny#b__$$f6ry4wy8oxre97&-68u_0lk3gw(z=d40_dxey3zw0v1
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_ACCESS_KEY_ID
+      - SENTRY_DSN
+      - WAFP_RUN_ID
+    stdin_open: true
+    tty: true
+
+  cache:
+    image: redis:4.0.10
+    container_name: cccatalog-api_cache_1

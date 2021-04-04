@@ -1,0 +1,176 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Open Topo Data API",
+    "description": "Open Topo Data is a REST API server for your elevation data.",
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://0.0.0.0:5000/"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {"enum":  ["OK"]}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/{dataset_name}": {
+      "get": {
+        "parameters": [
+          {
+            "name": "dataset_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "test-dataset"
+              ]
+            }
+          },
+          {
+            "name": "locations",
+            "in": "query",
+            "required": true,
+            "style": "pipeDelimited",
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"type": "string", "format": "wgs84"}
+            }
+          },
+          {
+            "name": "interpolation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "nearest",
+                "bilinear",
+                "cubic"
+              ]
+            }
+          },
+          {
+            "name": "nodata_value",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "enum": [
+                    "null",
+                    "nan"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "OK"
+                      ]
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "elevation": {
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "location": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "lat": {
+                                "type": "number"
+                              },
+                              "lng": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "lat",
+                              "lng"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "elevation",
+                          "location"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "results"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "INVALID_REQUEST"
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

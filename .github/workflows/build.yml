@@ -1,0 +1,86 @@
+name: Build jobs
+
+on:
+  pull_request:
+    paths:
+      - '**.py'
+      - '.github/workflows/*.yml'
+      - '.pylintrc'
+      - '.pre-commit-config.yaml'
+      - '.pydocstyle'
+      - 'poetry.lock'
+      - 'pyproject.toml'
+      - 'tox.ini'
+      - 'mypy.ini'
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  pre-commit:
+    name: Generic pre-commit checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - run: pip install pre-commit
+      - run: SKIP=pylint,mypy pre-commit run --all-files
+
+  pylint:
+    name: Pylint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - run: pip install pre-commit
+      - run: pre-commit run pylint --all-files
+
+  mypy:
+    name: Mypy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - run: pip install pre-commit
+      - run: pre-commit run mypy --all-files
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - run: pip install tox coverage poetry
+
+      - name: Run tox job
+        run: tox -e py39
+        env:
+          TOX_JOB: py39
+
+      - run: coverage combine
+      - run: coverage report

@@ -1,0 +1,22 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+import os
+import re
+import sys
+
+import sentry_sdk
+from jupyterhub.app import main  # pylint: disable=no-name-in-module
+from sentry_sdk.integrations.tornado import TornadoIntegration
+
+dsn = os.environ.get("SENTRY_DSN")
+run_id = os.environ.get("WAFP_RUN_ID")
+sentry_sdk.init(
+    dsn=dsn,
+    integrations=[TornadoIntegration()],
+)
+sentry_sdk.set_tag("wafp.run-id", run_id)
+print("Sentry installed!", dsn, run_id)
+
+if __name__ == "__main__":
+    sys.argv[0] = re.sub(r"(-script\.pyw|\.exe)?$", "", sys.argv[0])
+    sys.exit(main())

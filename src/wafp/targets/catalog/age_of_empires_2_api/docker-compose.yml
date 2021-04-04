@@ -1,0 +1,11 @@
+version: '3'
+services:
+  web:
+    build: .
+    init: true
+    environment:
+      - PORT=3000
+      - SENTRY_DSN
+      - WAFP_RUN_ID
+    ports:
+      - '${PORT-3000}:80'

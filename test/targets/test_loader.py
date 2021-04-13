@@ -51,6 +51,21 @@ class Default(BaseTarget):
     def get_schema_location(self) -> str:
         return f"http://0.0.0.0:{self.port}/spec.json"
 """
+TARGET_WITH_EXCLUDED_BASE_CLASS = """
+from wafp.targets import BaseTarget
+
+class Base(BaseTarget):
+    __collect__ = False
+
+    def get_base_url(self) -> str:
+        return f"http://0.0.0.0:{self.port}/"
+
+    def get_schema_location(self) -> str:
+        return f"http://0.0.0.0:{self.port}/spec.json"
+
+class Default(Base):
+    pass
+"""
 
 
 @pytest.fixture
@@ -140,5 +155,12 @@ def test_get_all_variants_multiple_targets(target, catalog):
 @pytest.mark.target(TARGET_WITH_BASE_TARGET)
 def test_exclude_base_target(target, catalog):
     # When `BaseTarget` is in the target's module namespace
+    # Then it should not be listed in available variants
+    assert list(loader.get_all_variants(catalog=catalog)) == ["my_target"]
+
+
+@pytest.mark.target(TARGET_WITH_EXCLUDED_BASE_CLASS)
+def test_exclude_by_attribute(target, catalog):
+    # When there is a class that is explicitly excluded from collection
     # Then it should not be listed in available variants
     assert list(loader.get_all_variants(catalog=catalog)) == ["my_target"]

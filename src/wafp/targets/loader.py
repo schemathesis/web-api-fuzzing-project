@@ -5,7 +5,7 @@ from types import ModuleType
 from typing import Generator, List, Optional, Type
 
 from . import catalog as default_catalog  # type: ignore
-from .core import BaseTarget, Target
+from .core import COLLECTION_ATTRIBUTE_NAME, BaseTarget, Target
 from .errors import AmbiguousTargetNameError
 
 
@@ -67,5 +67,5 @@ def _iter_targets(module: ModuleType) -> Generator[Type[BaseTarget], None, None]
     return (
         cls
         for _, cls in inspect.getmembers(module, inspect.isclass)
-        if issubclass(cls, BaseTarget) and cls is not BaseTarget
+        if issubclass(cls, BaseTarget) and cls is not BaseTarget and getattr(cls, COLLECTION_ATTRIBUTE_NAME, True)
     )

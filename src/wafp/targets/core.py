@@ -3,7 +3,7 @@ import inspect
 import os
 import pathlib
 import time
-from typing import Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 import attr
 import structlog
@@ -36,8 +36,37 @@ def generate_run_id() -> str:
     return str(int(time.time()))
 
 
+COLLECTION_ATTRIBUTE_NAME = "__collect__"
+
+
+class TargetMeta(abc.ABCMeta):
+    """Custom loading behavior.
+
+    A class defined with `__collect__ = False` won't be collected at all:
+
+    .. code-block:: python
+
+        from wafp.targets import BaseTarget
+
+        # NOT COLLECTED
+        class Base(BaseTarget):
+            __collect__ = False
+            ...
+
+        # COLLECTED
+        class Default(Base):
+            ...
+    """
+
+    def __new__(cls, name: str, bases: Tuple[type, ...], namespace: Dict[str, Any], **kwargs: Any) -> "TargetMeta":
+        # This attribute is set to `True` unless explicitly defined.
+        # It makes the loader to avoid collecting classes that serve as base classes
+        namespace.setdefault(COLLECTION_ATTRIBUTE_NAME, True)
+        return super().__new__(cls, name, bases, namespace, **kwargs)  # type: ignore
+
+
 @attr.s()
-class BaseTarget(abc.ABC):
+class BaseTarget(abc.ABC, metaclass=TargetMeta):
     port: int = attr.ib(factory=unused_port)
     build: bool = attr.ib(default=False)
     sentry_dsn: Optional[str] = attr.ib(default=None)

@@ -1,10 +1,11 @@
 version: '3'
 services:
   web:
-    build:
-      context: https://github.com/postmanlabs/httpbin.git#f8ec666b4d1b654e4ff6aedd356f510dcac09f83
+    build: .
     init: true
     environment:
       - PORT=3000
+      - SENTRY_DSN
+      - WAFP_RUN_ID
     ports:
       - '${PORT-3000}:80'

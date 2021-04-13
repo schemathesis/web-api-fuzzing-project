@@ -2,6 +2,16 @@
 
 The WAFP project is a test suite for evaluating various characteristics of Web API fuzzers.
 WAFP is fully runnable as a CLI tool that spins up fuzzing targets & runs fuzzers against them.
+The project started as an evaluation suite for the `Property-Based Testing of Web APIs` academic paper by Zac Hatfield-Dodds (@Zac-HD) and Dmitry Dygalo (@Stranger6667).
+
+## Installation
+
+WAFP is built around Docker and is tested against the `20.10.0` version. Check [the official Docker docs](https://docs.docker.com/get-docker/) for installation guide.
+Other dependencies are managed via `poetry` (check out the [installation guide](https://github.com/sdispater/poetry#installation)):
+
+```
+poetry install
+```
 
 ## Fuzzing targets
 
@@ -15,6 +25,12 @@ A target is represented as a directory with at least two components:
 
 But generally, there could be any dependencies needed to build a `docker-compose` project.
 All available targets are located in `src/wafp/targets/catalog`.
+
+You can run targets with the following command (replace `<target-name>` with any target name from the catalog):
+
+```
+python -m wafp.targets.cli <target-name>
+```
 
 ### Target structure
 

@@ -27,16 +27,36 @@ class CliArguments:
 
 def parse_args() -> CliArguments:
     parser = argparse.ArgumentParser()
-    parser.add_argument("target", choices=list(loader.get_all_variants()))
-    parser.add_argument("--port", required=False, type=int, default=unused_port())
-    parser.add_argument("--no-cleanup", action="store_true", required=False, default=False)
-    parser.add_argument("--build", action="store_true", required=False, default=False)
-    parser.add_argument("--run-id", action="store", type=str, required=False)
-    parser.add_argument("--sentry-dsn", action="store", type=str, required=False)
-    parser.add_argument("--sentry-url", action="store", type=str, required=False)
-    parser.add_argument("--sentry-token", action="store", type=str, required=False)
-    parser.add_argument("--sentry-organization", action="store", type=str, required=False)
-    parser.add_argument("--sentry-project", action="store", type=str, required=False)
+    parser.add_argument("target", choices=list(loader.get_all_variants()), help="Fuzz target to start")
+    parser.add_argument(
+        "--port", required=False, type=int, default=unused_port(), help="TCP port on localhost used for the fuzz target"
+    )
+    parser.add_argument(
+        "--no-cleanup", action="store_true", required=False, default=False, help="Do not perform any cleanup on exit"
+    )
+    parser.add_argument(
+        "--build", action="store_true", required=False, default=False, help="Force building docker images"
+    )
+    parser.add_argument(
+        "--run-id",
+        action="store",
+        type=str,
+        required=False,
+        help="Explicit ID used to identify different runs in Sentry",
+    )
+    parser.add_argument("--sentry-dsn", action="store", type=str, required=False, help="Sentry DSN for the fuzz target")
+    parser.add_argument("--sentry-url", action="store", type=str, required=False, help="Sentry instance base URL")
+    parser.add_argument("--sentry-token", action="store", type=str, required=False, help="Sentry access token")
+    parser.add_argument(
+        "--sentry-organization",
+        action="store",
+        type=str,
+        required=False,
+        help="The slug of the Sentry organization the fuzz target project belongs to",
+    )
+    parser.add_argument(
+        "--sentry-project", action="store", type=str, required=False, help="The slug of the Sentry project"
+    )
     return CliArguments(**vars(parser.parse_args()))
 
 

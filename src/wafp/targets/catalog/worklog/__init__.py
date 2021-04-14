@@ -12,4 +12,6 @@ class Default(BaseTarget):
         return b"* Running on" in line
 
     def get_metadata(self) -> Metadata:
-        return Metadata.flasgger(flask_version="1.0.2", flasgger_version="0.9.1", openapi_version="2.0")
+        return Metadata.flasgger(
+            flask_version="1.0.2", flasgger_version="0.9.1", openapi_version="2.0", validation_from_schema=False
+        )

@@ -36,4 +36,5 @@ class Default(BaseTarget):
             framework=Package(name="Tornado", version="6.1.0"),
             schema_source=SchemaSource(type=SchemaSourceType.STATIC, library=None),
             specification=Specification(name=SpecificationType.OPENAPI, version="2.0"),
+            validation_from_schema=False,
         )

@@ -15,11 +15,12 @@ class Default(BaseTarget):
         return Metadata.flask(
             flask_version="1.1.1",
             schema_source=SchemaSource(
-                type=SchemaSourceType.GENERATED,
+                type=SchemaSourceType.MIXED,
                 library=Package(
                     name="flask-apispec",
                     version="0.7.0",
                 ),
             ),
+            validation_from_schema=False,
             specification=Specification(name=SpecificationType.OPENAPI, version="2.0"),
         )

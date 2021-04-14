@@ -1,4 +1,4 @@
-from wafp.targets import BaseTarget, Metadata, SchemaSource, SchemaSourceType, Specification, SpecificationType
+from wafp.targets import BaseTarget, Metadata
 
 
 class Default(BaseTarget):
@@ -13,7 +13,5 @@ class Default(BaseTarget):
 
     def get_metadata(self) -> Metadata:
         return Metadata.flasgger(
-            flask_version="1.1.2",
-            flasgger_version="0.9.4",
-            openapi_version="2.0",
+            flask_version="1.1.2", flasgger_version="0.9.4", openapi_version="2.0", validation_from_schema=False
         )

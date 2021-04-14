@@ -18,5 +18,6 @@ class Default(BaseTarget):
                 type=SchemaSourceType.STATIC,
                 library=None,
             ),
+            validation_from_schema=False,
             specification=Specification(name=SpecificationType.OPENAPI, version="3.0.2"),
         )

@@ -26,4 +26,5 @@ class Default(BaseTarget):
             framework=Package(name="Express", version="4.17.1"),
             schema_source=SchemaSource(type=SchemaSourceType.STATIC, library=None),
             specification=Specification(name=SpecificationType.OPENAPI, version="2.0"),
+            validation_from_schema=False,
         )

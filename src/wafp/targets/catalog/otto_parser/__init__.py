@@ -26,4 +26,5 @@ class Default(BaseTarget):
             framework=Package(name="tide", version="0.14.0"),
             schema_source=SchemaSource(type=SchemaSourceType.STATIC, library=None),
             specification=Specification(name=SpecificationType.OPENAPI, version="3.0.3"),
+            validation_from_schema=False,
         )

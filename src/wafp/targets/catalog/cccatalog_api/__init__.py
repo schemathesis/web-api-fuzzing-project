@@ -33,6 +33,7 @@ class Default(BaseTarget):
             schema_source=SchemaSource(
                 type=SchemaSourceType.GENERATED, library=Package(name="drf-yasg", version="1.17.1")
             ),
+            validation_from_schema=False,
             specification=Specification(name=SpecificationType.OPENAPI, version="2.0"),
         )
 

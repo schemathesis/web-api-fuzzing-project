@@ -16,8 +16,12 @@ class SpecificationType(enum.Enum):
 
 
 class SchemaSourceType(enum.Enum):
+    # The whole API schema is manually written without help of automated tools
     STATIC = enum.auto()
+    # The whole API schema is automatically generated via an automated tool
     GENERATED = enum.auto()
+    # Some parts generated automatically, others are filled manually
+    MIXED = enum.auto()
 
 
 @attr.s()
@@ -45,19 +49,26 @@ class Metadata:
     language: Language = attr.ib()
     framework: Optional[Package] = attr.ib()
     schema_source: SchemaSource = attr.ib()
+    # Whether API schema is used to automatically validate input
+    validation_from_schema: bool = attr.ib()
     specification: Specification = attr.ib()
 
     @classmethod
-    def flasgger(cls, *, flask_version: str, flasgger_version: str, openapi_version: str) -> "Metadata":
+    def flasgger(
+        cls, *, flask_version: str, flasgger_version: str, openapi_version: str, validation_from_schema: bool
+    ) -> "Metadata":
         return cls.flask(
             flask_version=flask_version,
             schema_source=SchemaSource(
-                type=SchemaSourceType.GENERATED,
+                # Flasgger processes Python docstrings and use them in the resulting schema
+                type=SchemaSourceType.MIXED,
                 library=Package(
                     name="flasgger",
                     version=flasgger_version,
                 ),
             ),
+            # Could be enabled with `Swagger(parse=True)` or `@swag_from('definitions.yml', validation=True)`
+            validation_from_schema=validation_from_schema,
             specification=Specification(name=SpecificationType.OPENAPI, version=openapi_version),
         )
 

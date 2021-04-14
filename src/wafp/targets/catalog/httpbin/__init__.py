@@ -16,4 +16,5 @@ class Default(BaseTarget):
             flask_version="1.0.2",
             flasgger_version="0.9.0",
             openapi_version="2.0",
+            validation_from_schema=False,
         )

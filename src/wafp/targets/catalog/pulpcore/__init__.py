@@ -29,6 +29,7 @@ class Default(BaseTarget):
             schema_source=SchemaSource(
                 type=SchemaSourceType.GENERATED, library=Package(name="drf-spectacular", version="0.11.0")
             ),
+            validation_from_schema=False,
             specification=Specification(name=SpecificationType.OPENAPI, version="3.0.3"),
         )
 

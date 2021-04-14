@@ -7,10 +7,16 @@ from wafp.targets import loader
 from wafp.targets.network import is_available
 
 
-@pytest.mark.parametrize("variant", loader.get_all_variants())
-def test_all_targets(variant):
-    cls = loader.by_name(variant)
+@pytest.fixture(params=loader.get_all_variants())
+def target(request):
+    cls = loader.by_name(request.param)
     target = cls()
+    yield target
+    target.stop()
+    target.cleanup()
+
+
+def test_all_targets(target):
     try:
         target.start()
     except CalledProcessError as exc:
@@ -22,7 +28,3 @@ def test_all_targets(variant):
         assert os.path.exists(schema)
     else:
         assert is_available(schema)
-    # cleanup should be more resilient. if test fails before this part, then some containers still could be running,
-    # networks not removed, etc.
-    target.stop()
-    target.cleanup()

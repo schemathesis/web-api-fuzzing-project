@@ -2,20 +2,8 @@ import sys
 
 import pytest
 
+from wafp.errors import AmbiguousItemNameError
 from wafp.targets import BaseTarget, loader
-from wafp.targets.errors import AmbiguousTargetNameError
-
-
-@pytest.fixture
-def catalog_path(tmp_path, monkeypatch):
-    monkeypatch.syspath_prepend(tmp_path.parent)  # It should be possible to import from catalog
-    return tmp_path
-
-
-@pytest.fixture
-def catalog(catalog_path):
-    return catalog_path.name
-
 
 TARGET_WITH_ONE_VARIANT = """
 from wafp import targets
@@ -128,8 +116,8 @@ def test_by_name_ambiguous(target, catalog):
     # When the target defines multiple variants
     # And the variant is not specified during loading
     with pytest.raises(
-        AmbiguousTargetNameError,
-        match="Target `my_target` defines multiple variants, and it is not clear which one to load. "
+        AmbiguousItemNameError,
+        match="`my_target` defines multiple variants, and it is not clear which one to load. "
         "You need to specify a fully qualified name. Variants: my_target:Another, my_target:Default",
     ):
         # Then it leads to an error

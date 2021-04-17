@@ -1,105 +1,31 @@
 import abc
-import inspect
-import os
-import pathlib
 import time
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Dict, List, Optional, Type
 
 import attr
-import structlog
 
+from ..artifacts import Artifact
+from ..base import Component
+from ..constants import WAIT_TARGET_READY_TIMEOUT
+from ..docker import docker
 from . import sentry
-from .artifacts import Artifact
-from .constants import COMPOSE_PROJECT_NAME_PREFIX, DEFAULT_DOCKER_COMPOSE_FILENAME, WAIT_TARGET_READY_TIMEOUT
-from .docker_api import Compose, docker
 from .errors import TargetNotReady
 from .metadata import Metadata
 from .network import unused_port
 from .retries import wait
-from .utils import classproperty
-
-structlog.configure(
-    processors=[
-        structlog.processors.add_log_level,
-        structlog.processors.StackInfoRenderer(),
-        structlog.dev.set_exc_info,
-        structlog.processors.format_exc_info,
-        structlog.processors.TimeStamper(),
-        structlog.dev.ConsoleRenderer(),
-    ],
-)
-
-logger = structlog.get_logger()
 
 
 def generate_run_id() -> str:
     return str(int(time.time()))
 
 
-COLLECTION_ATTRIBUTE_NAME = "__collect__"
-
-
-class TargetMeta(abc.ABCMeta):
-    """Custom loading behavior.
-
-    A class defined with `__collect__ = False` won't be collected at all:
-
-    .. code-block:: python
-
-        from wafp.targets import BaseTarget
-
-        # NOT COLLECTED
-        class Base(BaseTarget):
-            __collect__ = False
-            ...
-
-        # COLLECTED
-        class Default(Base):
-            ...
-    """
-
-    def __new__(cls, name: str, bases: Tuple[type, ...], namespace: Dict[str, Any], **kwargs: Any) -> "TargetMeta":
-        # This attribute is set to `True` unless explicitly defined.
-        # It makes the loader to avoid collecting classes that serve as base classes
-        namespace.setdefault(COLLECTION_ATTRIBUTE_NAME, True)
-        return super().__new__(cls, name, bases, namespace, **kwargs)  # type: ignore
-
-
 @attr.s()
-class BaseTarget(abc.ABC, metaclass=TargetMeta):
+class BaseTarget(abc.ABC, Component):
     port: int = attr.ib(factory=unused_port)
     build: bool = attr.ib(default=False)
     sentry_dsn: Optional[str] = attr.ib(default=None)
     run_id: str = attr.ib(factory=generate_run_id)
     wait_target_ready_timeout: int = WAIT_TARGET_READY_TIMEOUT
-
-    @classproperty
-    def path(self) -> pathlib.Path:
-        """Path to the package directory."""
-        file_path = inspect.getfile(self)  # type: ignore
-        return pathlib.Path(file_path).parent
-
-    @classproperty
-    def name(self) -> str:
-        """Target name.
-
-        Corresponds to its package name.
-        """
-        return self.path.name
-
-    @classproperty
-    def logger(self) -> structlog.BoundLogger:
-        return logger.bind(name=self.name)
-
-    @classproperty
-    def project_name(self) -> str:
-        """Project name for docker-compose."""
-        return f"{COMPOSE_PROJECT_NAME_PREFIX}{self.name}"
-
-    @property
-    def compose(self) -> Compose:
-        """Namespace for docker-compose."""
-        return Compose(self)
 
     def start(self) -> "TargetContext":
         """Start the target.
@@ -126,7 +52,7 @@ class BaseTarget(abc.ABC, metaclass=TargetMeta):
             raise TargetNotReady(message)
 
         logs = self.compose.logs()
-        self.after_start(logs, headers)
+        self.after_start(logs.stdout, headers)
         info = {
             "duration": round(time.perf_counter() - start, 2),
             "address": base_url,
@@ -173,11 +99,8 @@ class BaseTarget(abc.ABC, metaclass=TargetMeta):
 
     def get_environment_variables(self) -> Dict[str, str]:
         """Environment variables for docker-compose."""
-        env = {"PORT": str(self.port), "WAFP_RUN_ID": self.run_id}
-        # PATH: When `-p` is passed to docker-compose via a subprocess call it fails to find `git` during build
-        for key in ("PATH", "SENTRY_DSN"):
-            if key in os.environ:
-                env[key] = os.environ[key]
+        env = super().get_environment_variables()
+        env.update({"PORT": str(self.port), "WAFP_RUN_ID": self.run_id})
         if self.sentry_dsn is not None:
             env["SENTRY_DSN"] = self.sentry_dsn
         return env
@@ -186,17 +109,13 @@ class BaseTarget(abc.ABC, metaclass=TargetMeta):
         """Extract headers from docker-compose output lines."""
         return {}
 
-    def get_docker_compose_filename(self) -> str:
-        """Compose file name."""
-        return DEFAULT_DOCKER_COMPOSE_FILENAME
-
     def after_start(self, stdout: bytes, headers: Dict[str, str]) -> None:
         """Additional actions after the target is ready.
 
         E.g. create a user, login, etc.
         """
 
-    def get_artifacts(
+    def collect_artifacts(
         self,
         sentry_url: Optional[str] = None,
         sentry_token: Optional[str] = None,
@@ -209,7 +128,7 @@ class BaseTarget(abc.ABC, metaclass=TargetMeta):
 
         It could also collect logs that are stored in containers directly.
         """
-        artifacts = [Artifact.log(self.compose.logs())]
+        artifacts = [Artifact.stdout(self.compose.logs().stdout)]
         if sentry_url and sentry_token and sentry_organization and sentry_project:
             events = sentry.list_events(sentry_url, sentry_token, sentry_organization, sentry_project, self.run_id)
             artifacts.extend(map(Artifact.sentry_event, events))

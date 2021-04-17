@@ -1,13 +1,14 @@
 import argparse
 import subprocess
+import sys
 from contextlib import suppress
 from dataclasses import dataclass
 from time import sleep
-from typing import Optional
+from typing import List, Optional
 
+from ..docker import ensure_docker_version
 from . import loader
 from .core import unused_port
-from .docker_api import ensure_docker_version
 from .errors import TargetNotReady
 
 
@@ -25,9 +26,9 @@ class CliArguments:
     sentry_project: Optional[str]
 
 
-def parse_args() -> CliArguments:
+def parse_args(args: List[str], *, catalog: Optional[str] = None) -> CliArguments:
     parser = argparse.ArgumentParser()
-    parser.add_argument("target", choices=list(loader.get_all_variants()), help="Fuzz target to start")
+    parser.add_argument("target", choices=list(loader.get_all_variants(catalog=catalog)), help="Fuzz target to start")
     parser.add_argument(
         "--port", required=False, type=int, default=unused_port(), help="TCP port on localhost used for the fuzz target"
     )
@@ -57,18 +58,19 @@ def parse_args() -> CliArguments:
     parser.add_argument(
         "--sentry-project", action="store", type=str, required=False, help="The slug of the Sentry project"
     )
-    return CliArguments(**vars(parser.parse_args()))
+    return CliArguments(**vars(parser.parse_args(args)))
 
 
-def main() -> int:
+def main(args: Optional[List[str]] = None, *, catalog: Optional[str] = None) -> int:
     ensure_docker_version()
-    args = parse_args()
-    cls = loader.by_name(args.target)
+    args = args or sys.argv[1:]
+    parsed_args = parse_args(args, catalog=catalog)
+    cls = loader.by_name(parsed_args.target, catalog=catalog)
     if cls is None:
-        raise ValueError(f"Target `{args.target}` is not found")
-    kwargs = {"port": args.port, "build": args.build, "sentry_dsn": args.sentry_dsn}
-    if args.run_id is not None:
-        kwargs["run_id"] = args.run_id  # type: ignore
+        raise ValueError(f"Target `{parsed_args.target}` is not found")
+    kwargs = {"port": parsed_args.port, "build": parsed_args.build, "sentry_dsn": parsed_args.sentry_dsn}
+    if parsed_args.run_id is not None:
+        kwargs["run_id"] = parsed_args.run_id  # type: ignore
     target = cls(**kwargs)  # type: ignore
     try:
         target.start()
@@ -83,7 +85,7 @@ def main() -> int:
         return 0
     finally:
         target.stop()
-        if not args.no_cleanup:
+        if not parsed_args.no_cleanup:
             target.cleanup()
 
 

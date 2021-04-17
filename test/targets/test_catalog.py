@@ -17,6 +17,7 @@ def target(request):
 
 
 def test_all_targets(target):
+    # Start & stop all implemented targets
     try:
         target.start()
     except CalledProcessError as exc:
@@ -28,3 +29,5 @@ def test_all_targets(target):
         assert os.path.exists(schema)
     else:
         assert is_available(schema)
+    artifacts = target.collect_artifacts()
+    assert len(artifacts) > 0

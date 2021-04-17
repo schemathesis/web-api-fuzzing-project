@@ -27,4 +27,12 @@ class Default(BaseTarget):
             framework=fastapi,
             schema_source=SchemaSource(type=SchemaSourceType.GENERATED, library=fastapi),
             specification=Specification(name=SpecificationType.OPENAPI, version="3.0"),
+            validation_from_schema=True,
         )
+
+
+class WithFile(Default):
+    """API schema is stored as a file."""
+
+    def get_schema_location(self) -> str:
+        return str(self.path / "openapi.json")

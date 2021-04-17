@@ -145,7 +145,7 @@ target = target.Default(
     sentry_dsn="https://c4715cd284cf4f509c32e49f27643f30@sentry.company.com/42"
 )
 # Load all artifacts including errors reported to Sentry
-artifacts = target.get_artifacts(
+artifacts = target.collect_artifacts(
     # Your Sentry instance base URL
     sentry_url="https://sentry.company.com",
     # Sentry access token

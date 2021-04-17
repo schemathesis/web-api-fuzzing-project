@@ -5,7 +5,8 @@ import attr
 
 
 class ArtifactType(enum.Enum):
-    LOG = enum.auto()
+    STDOUT = enum.auto()
+    LOG_FILE = enum.auto()
     SENTRY_EVENT = enum.auto()
 
 
@@ -15,8 +16,12 @@ class Artifact:
     type: ArtifactType = attr.ib()
 
     @classmethod
-    def log(cls, value: bytes) -> "Artifact":
-        return cls(value=value, type=ArtifactType.LOG)
+    def stdout(cls, value: bytes) -> "Artifact":
+        return cls(value=value, type=ArtifactType.STDOUT)
+
+    @classmethod
+    def log_file(cls, value: str) -> "Artifact":
+        return cls(value=value, type=ArtifactType.LOG_FILE)
 
     @classmethod
     def sentry_event(cls, value: Dict[str, Any]) -> "Artifact":

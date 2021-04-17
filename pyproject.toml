@@ -12,6 +12,7 @@ structlog = "^21.1.0"
 colorama = "^0.4.4"
 docker-compose = ">=1.28.0"
 requests = "^2.25.1"
+pytest-mock = "^3.5.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"

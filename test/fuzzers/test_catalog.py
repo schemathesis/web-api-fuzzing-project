@@ -10,7 +10,10 @@ from ..targets import targets_catalog
 
 @pytest.fixture(params=fuzzers_loader.get_all_variants())
 def fuzzer(request):
-    return fuzzers_loader.by_name(request.param)()
+    instance = fuzzers_loader.by_name(request.param)()
+    yield instance
+    instance.stop()
+    instance.cleanup()
 
 
 @pytest.fixture(params=targets_loader.get_all_variants(catalog=targets_catalog.__name__))
@@ -18,6 +21,7 @@ def target(request):
     instance = targets_loader.by_name(request.param, catalog=targets_catalog.__name__)()
     yield instance
     instance.stop()
+    instance.cleanup()
 
 
 @pytest.mark.parametrize("headers", (None, {}, {"Foo": "Bearer bar"}))

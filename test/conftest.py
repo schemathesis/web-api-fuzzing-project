@@ -48,6 +48,7 @@ def target(target_package):
     instance = target_package.Default()
     yield instance
     instance.stop()
+    instance.cleanup()
 
 
 @pytest.fixture(scope="session")
@@ -71,4 +72,7 @@ def fuzzer_path(fuzzer_package):
 
 @pytest.fixture
 def fuzzer(fuzzer_package):
-    return fuzzer_package.Default()
+    instance = fuzzer_package.Default()
+    yield instance
+    instance.stop()
+    instance.cleanup()

@@ -10,7 +10,7 @@ import attr
 import structlog
 
 from .constants import COMPOSE_PROJECT_NAME_PREFIX, DEFAULT_DOCKER_COMPOSE_FILENAME
-from .docker import compose
+from .docker import compose, docker
 from .loader import COLLECTION_ATTRIBUTE_NAME
 from .utils import NOT_SET, NotSet, classproperty
 
@@ -96,6 +96,25 @@ class Component(metaclass=ComponentMeta):
         """Namespace for docker-compose."""
         return Compose(self)
 
+    def stop(self) -> None:
+        """Stop docker-compose stack."""
+        self.logger.msg("Stop")
+        self.compose.stop()
+
+    def cleanup(self) -> None:
+        """Remove resources."""
+        self.logger.msg("Clean up")
+        self.compose.rm()
+        # There could be other networks, but delete only the one created by default for simplicity (for now)
+        network = f"{self.project_name}_default"
+        try:
+            docker(["network", "rm", network])
+        except subprocess.CalledProcessError as exc:
+            # Ignore if network does not exist
+            if exc.stdout.decode("utf8") == f"Error: No such network: {network}\n":
+                return
+            raise
+
 
 def on_error(message: str) -> Callable:
     """Log the given message when an error occurs."""
@@ -126,7 +145,14 @@ class Compose:
         }
 
     @on_error("Failed to execute `docker-compose up`")
-    def up(self, timeout: Optional[int] = None, build: bool = False) -> subprocess.CompletedProcess:
+    def up(
+        self,
+        *,
+        services: Optional[List[str]] = None,
+        timeout: Optional[int] = None,
+        build: bool = False,
+        extra_env: Optional[Dict[str, str]] = None,
+    ) -> subprocess.CompletedProcess:
         """Build / create / start containers for a docker-compose service."""
         command = [
             "up",
@@ -138,10 +164,15 @@ class Compose:
         ]
         if build:
             command.append("--build")
+        if services is not None:
+            command.extend(services)
+        env = self.component.get_environment_variables()
+        if extra_env is not None:
+            env.update(extra_env)
         return compose(
             command,
             timeout=timeout,
-            env=self.component.get_environment_variables(),
+            env=env,
             **self._get_common_kwargs(),
         )
 

@@ -7,7 +7,6 @@ import attr
 from ..artifacts import Artifact
 from ..base import Component
 from ..constants import WAIT_TARGET_READY_TIMEOUT
-from ..docker import docker
 from . import sentry
 from .errors import TargetNotReady
 from .metadata import Metadata
@@ -62,18 +61,6 @@ class BaseTarget(abc.ABC, Component):
             info["headers"] = headers
         self.logger.msg("Target is ready", **info)
         return TargetContext(headers=headers)
-
-    def stop(self) -> None:
-        """Stop running target."""
-        self.logger.msg("Stop target")
-        self.compose.stop()
-
-    def cleanup(self) -> None:
-        """Remove target's resources."""
-        self.logger.msg("Clean up")
-        self.compose.rm()
-        # There could be other networks, but delete only the one created by default for simplicity (for now)
-        docker(["network", "rm", f"{self.project_name}_default"])
 
     # These methods are expected to be overridden
 

@@ -74,6 +74,8 @@ def main(args: Optional[List[str]] = None, *, catalog: Optional[str] = None) -> 
     fuzzer = cls()  # type: ignore
     result = fuzzer.run(parsed_args.schema, parsed_args.base_url, parsed_args.headers)
     result.collect_artifacts()
+    fuzzer.stop()
+    fuzzer.cleanup()
     return result.completed_process.returncode
 
 

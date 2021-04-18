@@ -41,6 +41,8 @@ def test_all_fuzzers(target, fuzzer, headers):
     result = fuzzer.run(schema, base_url, headers=headers)
     if fuzzer.name == "swagger_conformance" and result.completed_process.returncode == 1:
         pytest.xfail("Swagger-conformance has a very limited spec support")
+    if fuzzer.name == "fuzz_lightyear" and result.completed_process.returncode == 1:
+        pytest.xfail("Fuzz Lightyear has a very limited spec support")
     if fuzzer.name != "cats":
         assert result.completed_process.returncode == 0
     artifacts = result.collect_artifacts()

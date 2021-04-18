@@ -21,7 +21,7 @@ def generate_run_id() -> str:
 @attr.s()
 class BaseTarget(abc.ABC, Component):
     port: int = attr.ib(factory=unused_port)
-    build: bool = attr.ib(default=False)
+    force_build: bool = attr.ib(default=False)
     sentry_dsn: Optional[str] = attr.ib(default=None)
     run_id: str = attr.ib(factory=generate_run_id)
     wait_target_ready_timeout: int = WAIT_TARGET_READY_TIMEOUT
@@ -34,7 +34,7 @@ class BaseTarget(abc.ABC, Component):
         self.logger.msg("Start target")
         start = time.perf_counter()
         deadline = time.time() + self.wait_target_ready_timeout
-        self.compose.up(timeout=self.wait_target_ready_timeout, build=self.build)
+        self.compose.up(timeout=self.wait_target_ready_timeout, build=self.force_build)
         base_url = self.get_base_url()
         # Wait until base URL is accessible
         wait(base_url)

@@ -96,6 +96,11 @@ class Component(metaclass=ComponentMeta):
         """Namespace for docker-compose."""
         return Compose(self)
 
+    def build(self) -> None:
+        """Build docker-compose stack."""
+        self.logger.msg("Build")
+        self.compose.build()
+
     def stop(self) -> None:
         """Stop docker-compose stack."""
         self.logger.msg("Stop")
@@ -143,6 +148,25 @@ class Compose:
             "project": self.component.project_name,
             "file": self.component.get_docker_compose_filename(),
         }
+
+    @on_error("Failed to execute `docker-compose build`")
+    def build(
+        self,
+        *,
+        services: Optional[List[str]] = None,
+        timeout: Optional[int] = None,
+    ) -> subprocess.CompletedProcess:
+        """Build/rebuild services."""
+        command = ["build", "--force-rm"]
+        if services is not None:
+            command.extend(services)
+        env = self.component.get_environment_variables()
+        return compose(
+            command,
+            timeout=timeout,
+            env=env,
+            **self._get_common_kwargs(),
+        )
 
     @on_error("Failed to execute `docker-compose up`")
     def up(

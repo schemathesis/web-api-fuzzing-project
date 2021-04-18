@@ -68,7 +68,7 @@ def main(args: Optional[List[str]] = None, *, catalog: Optional[str] = None) -> 
     cls = loader.by_name(parsed_args.target, catalog=catalog)
     if cls is None:
         raise ValueError(f"Target `{parsed_args.target}` is not found")
-    kwargs = {"port": parsed_args.port, "build": parsed_args.build, "sentry_dsn": parsed_args.sentry_dsn}
+    kwargs = {"port": parsed_args.port, "force_build": parsed_args.build, "sentry_dsn": parsed_args.sentry_dsn}
     if parsed_args.run_id is not None:
         kwargs["run_id"] = parsed_args.run_id  # type: ignore
     target = cls(**kwargs)  # type: ignore

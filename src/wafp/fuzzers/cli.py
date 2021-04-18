@@ -14,6 +14,7 @@ class CliArguments:
     fuzzer: str
     schema: str
     base_url: str
+    build: bool
     headers: Optional[Dict[str, str]]
 
 
@@ -50,6 +51,9 @@ def parse_args(args: List[str], *, catalog: Optional[str] = None) -> CliArgument
         type=str,
     )
     parser.add_argument(
+        "--build", action="store_true", required=False, default=False, help="Force building docker images"
+    )
+    parser.add_argument(
         # Should be in form "NAME:VALUE"
         "--headers",
         "-H",
@@ -72,6 +76,8 @@ def main(args: Optional[List[str]] = None, *, catalog: Optional[str] = None) -> 
     if cls is None:
         raise ValueError(f"Fuzzer `{parsed_args.fuzzer}` is not found")
     fuzzer = cls()  # type: ignore
+    if parsed_args.build:
+        fuzzer.build()
     result = fuzzer.run(parsed_args.schema, parsed_args.base_url, parsed_args.headers)
     result.collect_artifacts()
     fuzzer.stop()

@@ -24,7 +24,7 @@ def target(request):
     instance.cleanup()
 
 
-@pytest.mark.parametrize("headers", (None, {}, {"Foo": "Bearer bar"}))
+@pytest.mark.parametrize("headers", ({}, {"Authorization": "Bearer bar"}))
 def test_all_fuzzers(target, fuzzer, headers):
     if fuzzer.name in ("swagger_conformance", "got_swag") and headers is not None:
         pytest.skip(f"{fuzzer.name} doesn't support headers customization")

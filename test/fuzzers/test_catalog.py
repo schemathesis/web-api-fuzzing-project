@@ -26,6 +26,8 @@ def target(request):
 
 @pytest.mark.parametrize("headers", (None, {}, {"Foo": "Bearer bar"}))
 def test_all_fuzzers(target, fuzzer, headers):
+    if fuzzer.name == "swagger_conformance" and headers is not None:
+        pytest.skip("Swagger-conformance doesn't support headers customization")
     # Run all implemented fuzzers against test catalog
     try:
         context = target.start()
@@ -37,6 +39,8 @@ def test_all_fuzzers(target, fuzzer, headers):
     if headers is not None:
         headers = {**context.headers, **headers}
     result = fuzzer.run(schema, base_url, headers=headers)
+    if fuzzer.name == "swagger_conformance" and result.completed_process.returncode == 1:
+        pytest.xfail("Swagger-conformance has a very limited spec support")
     if fuzzer.name != "cats":
         assert result.completed_process.returncode == 0
     artifacts = result.collect_artifacts()

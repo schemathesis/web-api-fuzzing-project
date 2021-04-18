@@ -1,0 +1,101 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "FastAPI",
+        "version": "0.1.0"
+    },
+    "paths": {
+        "/": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "schema": {}
+                    }
+                },
+                "operationId": "read_root__get",
+                "summary": "Read Root"
+            }
+        },
+        "/items/{item_id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "item_id",
+                        "required": true,
+                        "type": "integer"
+                    },
+                    {
+                        "in": "query",
+                        "name": "q",
+                        "required": false,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "schema": {}
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPValidationError"
+                        }
+                    }
+                },
+                "operationId": "read_item_items__item_id__get",
+                "summary": "Read Item"
+            }
+        }
+    },
+    "definitions": {
+        "HTTPValidationError": {
+            "properties": {
+                "detail": {
+                    "items": {
+                        "$ref": "#/definitions/ValidationError"
+                    },
+                    "title": "Detail",
+                    "type": "array"
+                }
+            },
+            "title": "HTTPValidationError",
+            "type": "object"
+        },
+        "ValidationError": {
+            "properties": {
+                "loc": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Location",
+                    "type": "array"
+                },
+                "msg": {
+                    "title": "Message",
+                    "type": "string"
+                },
+                "type": {
+                    "title": "Error Type",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "loc",
+                "msg",
+                "type"
+            ],
+            "title": "ValidationError",
+            "type": "object"
+        }
+    }
+}

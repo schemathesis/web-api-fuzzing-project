@@ -1,1 +1,1 @@
-from .core import BaseFuzzer
+from .core import BaseFuzzer, FuzzerContext

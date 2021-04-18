@@ -37,6 +37,7 @@ def test_all_fuzzers(target, fuzzer, headers):
     if headers is not None:
         headers = {**context.headers, **headers}
     result = fuzzer.run(schema, base_url, headers=headers)
-    assert result.completed_process.returncode == 0
+    if fuzzer.name != "cats":
+        assert result.completed_process.returncode == 0
     artifacts = result.collect_artifacts()
     assert len(artifacts) > 0

@@ -1,10 +1,12 @@
 from typing import Dict, List, Optional
 
-from wafp.fuzzers import BaseFuzzer
+from wafp.fuzzers import BaseFuzzer, FuzzerContext
 
 
 class Default(BaseFuzzer):
-    def get_entrypoint_args(self, schema: str, base_url: str, headers: Optional[Dict[str, str]]) -> List[str]:
+    def get_entrypoint_args(
+        self, context: FuzzerContext, schema: str, base_url: str, headers: Optional[Dict[str, str]]
+    ) -> List[str]:
         args = [schema]
         if headers is not None:
             for key, value in headers.items():

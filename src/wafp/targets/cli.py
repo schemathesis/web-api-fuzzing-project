@@ -1,23 +1,17 @@
 import argparse
-import subprocess
-import sys
-from contextlib import suppress
 from dataclasses import dataclass
-from time import sleep
-from typing import List, Optional
+from typing import Any, Dict, Optional
 
-from ..docker import ensure_docker_version
+from ..cli import BaseCliArguments
 from . import loader
-from .core import unused_port
-from .errors import TargetNotReady
+from .core import BaseTarget, Target, unused_port
 
 
 @dataclass
-class CliArguments:
+class SharedCliArguments(BaseCliArguments):
     target: str
     port: int
     no_cleanup: bool
-    build: bool
     run_id: Optional[str]
     sentry_dsn: Optional[str]
     sentry_url: Optional[str]
@@ -25,69 +19,77 @@ class CliArguments:
     sentry_organization: Optional[str]
     sentry_project: Optional[str]
 
+    def get_target_cls(self, *, catalog: Optional[str] = None) -> Target:
+        cls = loader.by_name(self.target, catalog=catalog)
+        if cls is None:
+            raise ValueError(f"Target `{self.target}` is not found")
+        return cls
 
-def parse_args(args: List[str], *, catalog: Optional[str] = None) -> CliArguments:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("target", choices=list(loader.get_all_variants(catalog=catalog)), help="Fuzz target to start")
-    parser.add_argument(
-        "--port", required=False, type=int, default=unused_port(), help="TCP port on localhost used for the fuzz target"
-    )
-    parser.add_argument(
-        "--no-cleanup", action="store_true", required=False, default=False, help="Do not perform any cleanup on exit"
-    )
-    parser.add_argument(
-        "--build", action="store_true", required=False, default=False, help="Force building docker images"
-    )
-    parser.add_argument(
-        "--run-id",
-        action="store",
-        type=str,
-        required=False,
-        help="Explicit ID used to identify different runs in Sentry",
-    )
-    parser.add_argument("--sentry-dsn", action="store", type=str, required=False, help="Sentry DSN for the fuzz target")
-    parser.add_argument("--sentry-url", action="store", type=str, required=False, help="Sentry instance base URL")
-    parser.add_argument("--sentry-token", action="store", type=str, required=False, help="Sentry access token")
-    parser.add_argument(
-        "--sentry-organization",
-        action="store",
-        type=str,
-        required=False,
-        help="The slug of the Sentry organization the fuzz target project belongs to",
-    )
-    parser.add_argument(
-        "--sentry-project", action="store", type=str, required=False, help="The slug of the Sentry project"
-    )
-    return CliArguments(**vars(parser.parse_args(args)))
+    def get_target_kwargs(self) -> Dict[str, Any]:
+        kwargs: Dict[str, Any] = {"port": self.port, "sentry_dsn": self.sentry_dsn}
+        if self.run_id is not None:
+            kwargs["run_id"] = self.run_id  # type: ignore
+        return kwargs
 
+    def get_target(self, *, catalog: Optional[str] = None) -> BaseTarget:
+        cls = self.get_target_cls(catalog=catalog)
+        return cls(**self.get_target_kwargs())
 
-def main(args: Optional[List[str]] = None, *, catalog: Optional[str] = None) -> int:
-    ensure_docker_version()
-    args = args or sys.argv[1:]
-    parsed_args = parse_args(args, catalog=catalog)
-    cls = loader.by_name(parsed_args.target, catalog=catalog)
-    if cls is None:
-        raise ValueError(f"Target `{parsed_args.target}` is not found")
-    kwargs = {"port": parsed_args.port, "force_build": parsed_args.build, "sentry_dsn": parsed_args.sentry_dsn}
-    if parsed_args.run_id is not None:
-        kwargs["run_id"] = parsed_args.run_id  # type: ignore
-    target = cls(**kwargs)  # type: ignore
-    try:
-        target.start()
-    except subprocess.CalledProcessError as exc:
-        return exc.returncode
-    except TargetNotReady:
-        target.cleanup()
-    try:
-        with suppress(KeyboardInterrupt):
-            while True:
-                sleep(1)
-        return 0
-    finally:
-        target.stop()
-        if not parsed_args.no_cleanup:
-            target.cleanup()
+    @classmethod
+    def add_arguments(cls, parser: argparse.ArgumentParser, *, catalog: Optional[str] = None) -> None:
+        parser.add_argument(
+            "target", choices=list(loader.get_all_variants(catalog=catalog)), help="Fuzz target to start"
+        )
+        parser.add_argument(
+            "--port",
+            required=False,
+            type=int,
+            default=unused_port(),
+            help="TCP port on localhost used for the fuzz target",
+        )
+        parser.add_argument(
+            "--no-cleanup",
+            action="store_true",
+            required=False,
+            default=False,
+            help="Do not perform any cleanup on exit",
+        )
+        parser.add_argument(
+            "--run-id",
+            action="store",
+            type=str,
+            required=False,
+            help="Explicit ID used to identify different runs in Sentry",
+        )
+        parser.add_argument(
+            "--sentry-dsn", action="store", type=str, required=False, help="Sentry DSN for the fuzz target"
+        )
+        parser.add_argument("--sentry-url", action="store", type=str, required=False, help="Sentry instance base URL")
+        parser.add_argument("--sentry-token", action="store", type=str, required=False, help="Sentry access token")
+        parser.add_argument(
+            "--sentry-organization",
+            action="store",
+            type=str,
+            required=False,
+            help="The slug of the Sentry organization the fuzz target project belongs to",
+        )
+        parser.add_argument(
+            "--sentry-project", action="store", type=str, required=False, help="The slug of the Sentry project"
+        )
 
 
-if __name__ == "__main__":
-    main()
+@dataclass
+class CliArguments(SharedCliArguments):
+    build: bool
+
+    def get_target_kwargs(self) -> Dict[str, Any]:
+        kwargs = super().get_target_kwargs()
+        kwargs["force_build"] = self.build
+        return kwargs
+
+    @classmethod
+    def add_arguments(cls, parser: argparse.ArgumentParser, *, catalog: Optional[str] = None) -> None:
+        super().add_arguments(parser, catalog=catalog)
+        parser.add_argument(
+            "--build", action="store_true", required=False, default=False, help="Force building docker images"
+        )

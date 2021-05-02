@@ -66,8 +66,12 @@ class BaseFuzzer(abc.ABC, Component):
         container_dir = self.get_container_input_directory()
         return str(container_dir / pathlib.Path(schema).name)
 
-    def run(self, schema: str, base_url: str, headers: Optional[Dict[str, str]] = None) -> "FuzzResult":
+    def run(
+        self, schema: str, base_url: str, headers: Optional[Dict[str, str]] = None, build: bool = False
+    ) -> "FuzzResult":
         """Run fuzzer against an API schema."""
+        if build:
+            self.build()
         context = self.get_fuzzer_context()
         schema_location = self.prepare_schema(context, schema)
         headers = headers or {}

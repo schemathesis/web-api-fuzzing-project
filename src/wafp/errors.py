@@ -4,3 +4,7 @@ class AmbiguousItemNameError(ValueError):
 
 class VersionError(RuntimeError):
     """Installed system dependency version is not supported."""
+
+
+class InvalidHeader(ValueError):
+    """Invalid string for header."""

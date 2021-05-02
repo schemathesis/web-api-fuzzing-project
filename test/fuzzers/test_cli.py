@@ -1,4 +1,4 @@
-from wafp.fuzzers import cli
+from wafp.fuzzers import __main__, cli
 from wafp.fuzzers.cli import parse_headers
 
 
@@ -7,7 +7,7 @@ def test_parse_headers():
 
 
 def test_arg_parsing(fuzzers_catalog, fuzzer_package):
-    args = cli.parse_args(
+    args = cli.CliArguments.parse(
         [
             "example_fuzzer",
             "--schema",
@@ -28,7 +28,7 @@ def test_arg_parsing(fuzzers_catalog, fuzzer_package):
 def test_main(fuzzers_catalog, fuzzer_package, target):
     # Running example fuzzer against example target
     target.start()
-    exit_code = cli.main(
+    exit_code = __main__.main(
         ["example_fuzzer", "--schema", target.get_schema_location(), "--base-url", target.get_base_url()],
         catalog=fuzzers_catalog.__name__,
     )

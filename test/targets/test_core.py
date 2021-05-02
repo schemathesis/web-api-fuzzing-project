@@ -67,3 +67,10 @@ def test_manually_removed_image(target):
     assert_until(
         lambda: b"Uvicorn running on http://0.0.0.0:80 (Press CTRL+C to quit)\n" in target.compose.logs().stdout
     )
+
+
+def test_run(target):
+    with target.run():
+        assert_until(
+            lambda: b"Uvicorn running on http://0.0.0.0:80 (Press CTRL+C to quit)\n" in target.compose.logs().stdout
+        )

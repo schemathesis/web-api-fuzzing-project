@@ -1,4 +1,7 @@
-from wafp.fuzzers import cli
+import pytest
+
+from wafp.errors import InvalidHeader
+from wafp.fuzzers import __main__, cli
 from wafp.fuzzers.cli import parse_headers
 
 
@@ -6,8 +9,13 @@ def test_parse_headers():
     assert parse_headers(["A: 42", "B: 43"]) == {"A": "42", "B": "43"}
 
 
+def test_parse_invalid_headers():
+    with pytest.raises(InvalidHeader):
+        parse_headers(["WRONG"])
+
+
 def test_arg_parsing(fuzzers_catalog, fuzzer_package):
-    args = cli.parse_args(
+    args = cli.CliArguments.from_args(
         [
             "example_fuzzer",
             "--schema",
@@ -28,7 +36,7 @@ def test_arg_parsing(fuzzers_catalog, fuzzer_package):
 def test_main(fuzzers_catalog, fuzzer_package, target):
     # Running example fuzzer against example target
     target.start()
-    exit_code = cli.main(
+    exit_code = __main__.main(
         ["example_fuzzer", "--schema", target.get_schema_location(), "--base-url", target.get_base_url()],
         catalog=fuzzers_catalog.__name__,
     )

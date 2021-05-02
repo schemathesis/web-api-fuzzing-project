@@ -1,6 +1,9 @@
 import abc
+import subprocess
+import sys
 import time
-from typing import Dict, List, Optional, Type
+from contextlib import contextmanager
+from typing import Dict, Generator, List, Optional, Type
 
 import attr
 
@@ -60,7 +63,7 @@ class BaseTarget(abc.ABC, Component):
         if headers:
             info["headers"] = headers
         self.logger.msg("Target is ready", **info)
-        return TargetContext(headers=headers)
+        return TargetContext(base_url=base_url, schema_location=self.get_schema_location(), headers=headers)
 
     # These methods are expected to be overridden
 
@@ -121,9 +124,28 @@ class BaseTarget(abc.ABC, Component):
             artifacts.extend(map(Artifact.sentry_event, events))
         return artifacts
 
+    @contextmanager
+    def run(self, no_cleanup: bool = False) -> Generator["TargetContext", None, None]:
+        """Run target as a context manager.
+
+        It is a common workflow for CLI.
+        """
+        try:
+            yield self.start()
+        except subprocess.CalledProcessError as exc:
+            sys.exit(exc.returncode)
+        except TargetNotReady:
+            sys.exit(1)
+        finally:
+            self.stop()
+            if not no_cleanup:
+                self.cleanup()
+
 
 @attr.s(slots=True)
 class TargetContext:
+    base_url: str = attr.ib()
+    schema_location: str = attr.ib()
     headers: Dict[str, str] = attr.ib()
 
 

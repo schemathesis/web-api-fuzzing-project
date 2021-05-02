@@ -13,6 +13,18 @@ Other dependencies are managed via `poetry` (check out the [installation guide](
 poetry install
 ```
 
+It also automatically installs WAFP CLI that is available via the `wafp` entry point.
+
+## Getting started
+
+To run a fuzzer against a target, you need to pass their names in CLI:
+
+```
+wafp schemathesis:Default jupyter_server
+```
+
+The command above will run the `Default` variant of Schemathesis against the Jupyter Server target.
+
 ## Fuzzing targets
 
 Every fuzzing target is a web application that runs via `docker-compose`. WAFP provides an API on top of

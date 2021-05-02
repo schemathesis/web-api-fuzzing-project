@@ -19,7 +19,7 @@ pytest = "^6.2.2"
 coverage = "^5.5"
 
 [tool.poetry.scripts]
-targets = "wafp.targets.cli:main"
+wafp = "wafp.__main__:main"
 
 [tool.black]
 line-length = 120

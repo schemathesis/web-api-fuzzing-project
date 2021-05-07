@@ -10,10 +10,11 @@ class Default(BaseFuzzer):
     def get_entrypoint_args(
         self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str]
     ) -> List[str]:
+        args = ["--basic_output=True"]
         if is_url(schema):
-            args = [f"--src_url={schema}"]
+            args.append(f"--src_url={schema}")
         else:
-            args = [f"-s={schema}"]
+            args.append(f"-s={schema}")
         parsed = urlparse(base_url)
         args.extend(
             [

@@ -16,6 +16,7 @@ class Default(BaseFuzzer):
             "--validate-schema=false",
             "--hypothesis-suppress-health-check=filter_too_much",
             "--debug-output-file=/tmp/wafp/output/out.jsonl",
+            "--no-color",
         ]
         if headers:
             for key, value in headers.items():

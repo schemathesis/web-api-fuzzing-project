@@ -16,6 +16,11 @@ def check_setup():
 
 
 @pytest.fixture
+def artifacts_dir(tmp_path_factory):
+    return tmp_path_factory.mktemp("artifacts")
+
+
+@pytest.fixture
 def catalog_path(tmp_path, monkeypatch):
     monkeypatch.syspath_prepend(tmp_path.parent)  # It should be possible to import from catalog
     return tmp_path

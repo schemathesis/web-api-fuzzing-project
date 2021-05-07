@@ -12,7 +12,7 @@ def main(args: Optional[List[str]] = None, *, catalog: Optional[str] = None) -> 
     result = fuzzer.run(
         schema=cli_args.schema, base_url=cli_args.base_url, headers=cli_args.headers, build=cli_args.build
     )
-    result.collect_artifacts()
+    fuzzer.process_artifacts(result, cli_args.output_dir)
     fuzzer.stop()
     fuzzer.cleanup()
     return result.completed_process.returncode

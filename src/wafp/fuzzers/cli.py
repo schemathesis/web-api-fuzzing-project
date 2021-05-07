@@ -50,6 +50,7 @@ class CliArguments(SharedCliArguments):
     build: bool
     schema: str
     base_url: str
+    output_dir: str
 
     @classmethod
     def extend_parser(cls, parser: argparse.ArgumentParser, *, catalog: Optional[str] = None) -> None:
@@ -65,6 +66,12 @@ class CliArguments(SharedCliArguments):
         )
         parser.add_argument(
             "--base-url",
+            action="store",
+            required=True,
+            type=str,
+        )
+        parser.add_argument(
+            "--output-dir",
             action="store",
             required=True,
             type=str,

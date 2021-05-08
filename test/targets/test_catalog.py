@@ -16,7 +16,7 @@ def target(request):
     target.cleanup()
 
 
-def test_all_targets(target):
+def test_all_targets(target, artifacts_dir):
     # Start & stop all implemented targets
     try:
         target.start()
@@ -29,5 +29,6 @@ def test_all_targets(target):
         assert os.path.exists(schema)
     else:
         assert is_available(schema)
-    artifacts = target.collect_artifacts()
+    artifacts = target.process_artifacts(artifacts_dir)
     assert len(artifacts) > 0
+    assert len(list(artifacts_dir.iterdir())) >= 1

@@ -1,4 +1,5 @@
 import enum
+import json
 import pathlib
 import shutil
 from typing import Any, Dict
@@ -35,6 +36,8 @@ class Artifact:
             self._save_stdout(output_dir)
         if self.type == ArtifactType.LOG_FILE:
             self._save_log_file(output_dir)
+        if self.type == ArtifactType.SENTRY_EVENT:
+            self._save_sentry_event(output_dir)
 
     def _save_stdout(self, output_dir: pathlib.Path) -> None:
         with (output_dir / "stdout.txt").open("wb") as fd:
@@ -46,3 +49,8 @@ class Artifact:
             shutil.copytree(source, output_dir, dirs_exist_ok=True)
         else:
             shutil.copy(source, output_dir)
+
+    def _save_sentry_event(self, output_dir: pathlib.Path) -> None:
+        event_id = self.value["eventID"]
+        with (output_dir / f"sentry_event_{event_id}.json").open("w") as fd:
+            json.dump(self.value, fd)

@@ -83,6 +83,7 @@ class CliArguments(SharedCliArguments):
     """CLI arguments for the Targets CLI entrypoint."""
 
     build: bool
+    output_dir: str
 
     def get_target_kwargs(self) -> Dict[str, Any]:
         kwargs = super().get_target_kwargs()
@@ -94,4 +95,10 @@ class CliArguments(SharedCliArguments):
         super().extend_parser(parser, catalog=catalog)
         parser.add_argument(
             "--build", action="store_true", required=False, default=False, help="Force building docker images"
+        )
+        parser.add_argument(
+            "--output-dir",
+            action="store",
+            required=True,
+            type=str,
         )

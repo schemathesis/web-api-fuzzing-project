@@ -12,9 +12,18 @@ def main(args: Optional[List[str]] = None, *, catalog: Optional[str] = None) -> 
     cli_args = CliArguments.from_args(args, catalog=catalog)
     target = cli_args.get_target(catalog=catalog)
 
-    with target.run(cli_args.no_cleanup), suppress(KeyboardInterrupt):
-        while True:
-            sleep(1)
+    with target.run(cli_args.no_cleanup):
+        with suppress(KeyboardInterrupt):
+            while True:
+                sleep(1)
+        target.process_artifacts(
+            output_dir=cli_args.output_dir,
+            sentry_url=cli_args.sentry_url,
+            sentry_token=cli_args.sentry_token,
+            sentry_project=cli_args.sentry_project,
+            sentry_organization=cli_args.sentry_organization,
+        )
+
     return 0
 
 

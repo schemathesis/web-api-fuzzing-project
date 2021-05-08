@@ -112,7 +112,7 @@ class BaseFuzzer(abc.ABC, Component):
         """Arguments to fuzzer's entrypoint in `docker-compose run <service> <args>`."""
         raise NotImplementedError
 
-    def process_artifacts(self, result: "FuzzResult", output_dir: Union[str, pathlib.Path]) -> None:
+    def process_artifacts(self, result: "FuzzResult", output_dir: Union[str, pathlib.Path]) -> List[Artifact]:
         """Collect, clean and store all fuzzer's artifacts."""
         if isinstance(output_dir, str):
             output_dir = pathlib.Path(output_dir)
@@ -120,6 +120,7 @@ class BaseFuzzer(abc.ABC, Component):
         output_dir.mkdir(exist_ok=True)
         for artifact in raw_artifacts:
             artifact.save_to(output_dir)
+        return raw_artifacts
 
     def collect_artifacts(self, temp_dir: pathlib.Path) -> List[Artifact]:
         """Extract fuzzer's artifacts - additional logs, test cases, etc."""

@@ -1,9 +1,10 @@
 import abc
+import pathlib
 import subprocess
 import sys
 import time
 from contextlib import contextmanager
-from typing import Dict, Generator, List, Optional, Type
+from typing import Dict, Generator, List, Optional, Type, Union
 
 import attr
 
@@ -104,6 +105,28 @@ class BaseTarget(abc.ABC, Component):
 
         E.g. create a user, login, etc.
         """
+
+    def process_artifacts(
+        self,
+        output_dir: Union[str, pathlib.Path],
+        sentry_url: Optional[str] = None,
+        sentry_token: Optional[str] = None,
+        sentry_organization: Optional[str] = None,
+        sentry_project: Optional[str] = None,
+    ) -> List[Artifact]:
+        """Collect, clean and store all target's artifacts."""
+        if isinstance(output_dir, str):
+            output_dir = pathlib.Path(output_dir)
+        raw_artifacts = self.collect_artifacts(
+            sentry_url=sentry_url,
+            sentry_token=sentry_token,
+            sentry_organization=sentry_organization,
+            sentry_project=sentry_project,
+        )
+        output_dir.mkdir(exist_ok=True)
+        for artifact in raw_artifacts:
+            artifact.save_to(output_dir)
+        return raw_artifacts
 
     def collect_artifacts(
         self,

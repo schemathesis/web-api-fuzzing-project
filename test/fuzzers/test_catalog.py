@@ -39,9 +39,12 @@ def test_all_fuzzers(target, fuzzer, headers, artifacts_dir):
     if headers is not None:
         headers = {**context.headers, **headers}
     result = fuzzer.run(schema, base_url, headers=headers)
-    if fuzzer.name in ("swagger_conformance", "fuzz_lightyear") and result.completed_process.returncode == 1:
+    if (
+        fuzzer.name in ("swagger_conformance", "fuzz_lightyear", "swagger_fuzzer", "fuzzy_swagger")
+        and result.completed_process.returncode == 1
+    ):
         pytest.xfail(f"{fuzzer.name} has a limited spec support")
-    if fuzzer.name not in ("cats", "got_swag", "swagger_fuzzer"):
+    if fuzzer.name not in ("cats", "got_swag"):
         assert result.completed_process.returncode == 0
     artifacts = result.collect_artifacts()
     assert len(artifacts) > 0

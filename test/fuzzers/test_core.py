@@ -1,5 +1,5 @@
 def test_run(fuzzer):
-    result = fuzzer.run("http://127.0.0.1:1/openapi.json", "http://127.0.0.1:1/")
+    result = fuzzer.start("http://127.0.0.1:1/openapi.json", "http://127.0.0.1:1/")
     assert result.completed_process.returncode != 0
     assert b"curl: (7) Failed to connect to 127.0.0.1 port 1: Connection refused" in result.completed_process.stdout
     artifacts = result.collect_artifacts()

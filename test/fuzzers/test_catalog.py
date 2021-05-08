@@ -38,7 +38,7 @@ def test_all_fuzzers(target, fuzzer, headers, artifacts_dir):
     base_url = target.get_base_url()
     if headers is not None:
         headers = {**context.headers, **headers}
-    result = fuzzer.run(schema, base_url, headers=headers)
+    result = fuzzer.start(schema, base_url, headers=headers)
     if (
         fuzzer.name in ("swagger_conformance", "fuzz_lightyear", "swagger_fuzzer", "fuzzy_swagger")
         and result.completed_process.returncode == 1

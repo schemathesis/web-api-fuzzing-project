@@ -9,12 +9,10 @@ def main(args: Optional[List[str]] = None, *, catalog: Optional[str] = None) -> 
     ensure_docker_version()
     cli_args = CliArguments.from_args(args, catalog=catalog)
     fuzzer = cli_args.get_fuzzer(catalog=catalog)
-    result = fuzzer.run(
+    with fuzzer.run(
         schema=cli_args.schema, base_url=cli_args.base_url, headers=cli_args.headers, build=cli_args.build
-    )
-    fuzzer.process_artifacts(result, cli_args.output_dir)
-    fuzzer.stop()
-    fuzzer.cleanup()
+    ) as result:
+        fuzzer.process_artifacts(result, cli_args.output_dir)
     return result.completed_process.returncode
 
 

@@ -1,10 +1,12 @@
 import abc
 import pathlib
 import subprocess
+import sys
 import tempfile
 import time
+from contextlib import contextmanager
 from shutil import copy2
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Type, Union
 
 import attr
 
@@ -67,7 +69,7 @@ class BaseFuzzer(abc.ABC, Component):
         container_dir = self.get_container_input_directory()
         return str(container_dir / pathlib.Path(schema).name)
 
-    def run(
+    def start(
         self, schema: str, base_url: str, headers: Optional[Dict[str, str]] = None, build: bool = False
     ) -> "FuzzResult":
         """Run fuzzer against an API schema."""
@@ -95,6 +97,22 @@ class BaseFuzzer(abc.ABC, Component):
             completed_process=completed_process,
             context=context,
         )
+
+    @contextmanager
+    def run(
+        self, schema: str, base_url: str, headers: Optional[Dict[str, str]] = None, build: bool = False
+    ) -> Generator["FuzzResult", None, None]:
+        """Run fuzzer as a context manager.
+
+        It is a common workflow for CLI.
+        """
+        try:
+            yield self.start(schema, base_url, headers, build)
+        except subprocess.CalledProcessError as exc:
+            sys.exit(exc.returncode)
+        finally:
+            self.stop()
+            self.cleanup()
 
     def serve_spec(self, context: "FuzzerContext", schema: str) -> str:
         # The schema is served via a static file server

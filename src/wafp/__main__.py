@@ -55,13 +55,18 @@ def main(
     fuzzer = cli_args.get_fuzzer(catalog=fuzzers_catalog)
     output_dir = pathlib.Path(cli_args.output_dir)
     with target.run(cli_args.no_cleanup) as context:
-        result = fuzzer.run(
+        with fuzzer.run(
             schema=context.schema_location, base_url=context.base_url, headers=context.headers, build=cli_args.build
-        )
-        output_dir.mkdir(exist_ok=True)
-        fuzzer.process_artifacts(result, output_dir / "fuzzer")
-        fuzzer.stop()
-        fuzzer.cleanup()
+        ) as result:
+            output_dir.mkdir(exist_ok=True)
+            fuzzer.process_artifacts(result, output_dir / "fuzzer")
+            target.process_artifacts(
+                output_dir=output_dir / "target",
+                sentry_url=cli_args.sentry_url,
+                sentry_token=cli_args.sentry_token,
+                sentry_project=cli_args.sentry_project,
+                sentry_organization=cli_args.sentry_organization,
+            )
     return result.completed_process.returncode
 
 

@@ -1,0 +1,12 @@
+version: '3'
+services:
+  fuzzer:
+    build: .
+    init: true
+    network_mode: host
+  static:
+    image: halverneus/static-file-server:latest
+    ports:
+      - "${PORT:-3001}:8080"
+    volumes:
+      - "${SERVE_INDEX:-/tmp}:/web"

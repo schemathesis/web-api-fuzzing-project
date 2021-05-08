@@ -41,7 +41,7 @@ def test_all_fuzzers(target, fuzzer, headers, artifacts_dir):
     result = fuzzer.run(schema, base_url, headers=headers)
     if fuzzer.name in ("swagger_conformance", "fuzz_lightyear") and result.completed_process.returncode == 1:
         pytest.xfail(f"{fuzzer.name} has a limited spec support")
-    if fuzzer.name not in ("cats", "got_swag"):
+    if fuzzer.name not in ("cats", "got_swag", "swagger_fuzzer"):
         assert result.completed_process.returncode == 0
     artifacts = result.collect_artifacts()
     assert len(artifacts) > 0

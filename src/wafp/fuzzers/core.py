@@ -11,6 +11,7 @@ import attr
 from ..artifacts import Artifact, ArtifactType
 from ..base import Component
 from ..constants import DEFAULT_FUZZER_SERVICE_NAME, TEMPORARY_DIRECTORY_PREFIX
+from ..targets.network import unused_port
 from ..utils import NOT_SET, NotSet, is_url
 
 
@@ -94,6 +95,15 @@ class BaseFuzzer(abc.ABC, Component):
             completed_process=completed_process,
             context=context,
         )
+
+    def serve_spec(self, context: "FuzzerContext", schema: str) -> str:
+        # The schema is served via a static file server
+        copy2(schema, context.input_directory)
+        port = unused_port()
+        # The service should be stopped by calling `cleanup` after fuzzing is done
+        self.compose.up(services=["static"], extra_env={"SERVE_INDEX": str(context.input_directory), "PORT": str(port)})
+        filename = pathlib.Path(schema).name
+        return f"http://0.0.0.0:{port}/{filename}"
 
     @abc.abstractmethod
     def get_entrypoint_args(

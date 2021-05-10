@@ -37,9 +37,9 @@ class BaseFuzzer(abc.ABC, Component):
         output_directory.mkdir()
         return input_directory, output_directory
 
-    def get_fuzzer_context(self) -> "FuzzerContext":
+    def get_fuzzer_context(self, target: Optional[str] = None) -> "FuzzerContext":
         input_directory, output_directory = self.get_input_output_directories()
-        return FuzzerContext(input_directory=input_directory, output_directory=output_directory)
+        return FuzzerContext(input_directory=input_directory, output_directory=output_directory, target=target)
 
     def get_container_input_directory(self) -> pathlib.Path:
         return pathlib.Path("/tmp/wafp/input")
@@ -70,12 +70,17 @@ class BaseFuzzer(abc.ABC, Component):
         return str(container_dir / pathlib.Path(schema).name)
 
     def start(
-        self, schema: str, base_url: str, headers: Optional[Dict[str, str]] = None, build: bool = False
+        self,
+        schema: str,
+        base_url: str,
+        headers: Optional[Dict[str, str]] = None,
+        build: bool = False,
+        target: Optional[str] = None,
     ) -> "FuzzResult":
         """Run fuzzer against an API schema."""
         if build:
             self.build()
-        context = self.get_fuzzer_context()
+        context = self.get_fuzzer_context(target)
         schema_location = self.prepare_schema(context, schema)
         headers = headers or {}
         info: Dict[str, Any] = {"schema_location": schema_location, "base_url": base_url}
@@ -100,14 +105,19 @@ class BaseFuzzer(abc.ABC, Component):
 
     @contextmanager
     def run(
-        self, schema: str, base_url: str, headers: Optional[Dict[str, str]] = None, build: bool = False
+        self,
+        schema: str,
+        base_url: str,
+        headers: Optional[Dict[str, str]] = None,
+        build: bool = False,
+        target: Optional[str] = None,
     ) -> Generator["FuzzResult", None, None]:
         """Run fuzzer as a context manager.
 
         It is a common workflow for CLI.
         """
         try:
-            yield self.start(schema, base_url, headers, build)
+            yield self.start(schema, base_url, headers, build, target)
         except subprocess.CalledProcessError as exc:
             sys.exit(exc.returncode)
         finally:
@@ -151,6 +161,7 @@ class FuzzerContext:
 
     input_directory: pathlib.Path = attr.ib()
     output_directory: pathlib.Path = attr.ib()
+    target: Optional[str] = attr.ib(default=None)
 
 
 @attr.s()

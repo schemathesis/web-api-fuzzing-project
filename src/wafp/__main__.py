@@ -56,7 +56,11 @@ def main(
     output_dir = pathlib.Path(cli_args.output_dir)
     with target.run(cli_args.no_cleanup) as context:
         with fuzzer.run(
-            schema=context.schema_location, base_url=context.base_url, headers=context.headers, build=cli_args.build
+            schema=context.schema_location,
+            base_url=context.base_url,
+            headers=context.headers,
+            build=cli_args.build,
+            target=cli_args.target,
         ) as result:
             output_dir.mkdir(exist_ok=True)
             fuzzer.process_artifacts(result, output_dir / "fuzzer")

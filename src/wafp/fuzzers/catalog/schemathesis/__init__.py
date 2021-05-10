@@ -21,7 +21,16 @@ class Default(BaseFuzzer):
         if headers:
             for key, value in headers.items():
                 args.extend(["-H", f"{key}: {value}"])
+        extend_entrypoint_args(context, args)
         return args
+
+
+def extend_entrypoint_args(context: FuzzerContext, args: List[str]) -> None:
+    """Add target-specific entrypoint arguments."""
+    if context.target == "age_of_empires_2_api":
+        # Its schema combines `swagger` and `openapi` keywords
+        # Schemathesis can force the schema version
+        args.append("--force-schema-version=30")
 
 
 class AllChecks(Default):

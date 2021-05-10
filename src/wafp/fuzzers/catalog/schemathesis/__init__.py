@@ -15,6 +15,7 @@ class Default(BaseFuzzer):
             f"--base-url={base_url}",
             "--validate-schema=false",
             "--hypothesis-suppress-health-check=filter_too_much",
+            "--hypothesis-deadline=None",
             "--debug-output-file=/tmp/wafp/output/out.jsonl",
             "--no-color",
         ]

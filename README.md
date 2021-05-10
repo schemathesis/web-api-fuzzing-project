@@ -20,10 +20,11 @@ It also automatically installs WAFP CLI that is available via the `wafp` entry p
 To run a fuzzer against a target, you need to pass their names in CLI:
 
 ```
-wafp schemathesis:Default jupyter_server
+wafp schemathesis:Default jupyter_server --output-dir=./artifacts
 ```
 
-The command above will run the `Default` variant of Schemathesis against the Jupyter Server target.
+The command above will run the `Default` variant of Schemathesis against the Jupyter Server target and will store
+all available artifacts in the `./artifacts` directory.
 
 ## Fuzzing targets
 
@@ -41,7 +42,7 @@ All available targets are located in `src/wafp/targets/catalog`.
 You can run targets with the following command (replace `<target-name>` with any target name from the catalog):
 
 ```
-python -m wafp.targets.cli <target-name>
+python -m wafp.targets <target-name> --output-dir=./artifacts
 ```
 
 ### Target structure

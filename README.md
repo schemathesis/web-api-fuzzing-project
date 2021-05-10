@@ -175,6 +175,10 @@ The `artifacts` variable will contain container logs and Sentry events as Python
 WAFP uses the `GET /api/0/projects/{organization_slug}/{project_slug}/events/` endpoint to retrieve events data.
 See more info in Sentry documentation - https://docs.sentry.io/api/events/list-a-projects-events/
 
+## Artifacts processing & data aggregation
+
+TODO.
+
 ## Related projects
 
 - [HypoFuzz](https://hypofuzz.com/). Putting smart fuzzing into the world's best testing workflow for Python. HypoFuzz runs your property-based test suite, using cutting-edge fuzzing techniques and coverage instrumentation to find even the rarest inputs which trigger an error.

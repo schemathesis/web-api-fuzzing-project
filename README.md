@@ -13,7 +13,7 @@ Other dependencies are managed via `poetry` (check out the [installation guide](
 poetry install
 ```
 
-It also automatically installs WAFP CLI that is available via the `wafp` entry point.
+It also automatically installs WAFP CLI to the current environment that is available via the `wafp` entry point.
 
 ## Getting started
 
@@ -25,6 +25,12 @@ wafp schemathesis:Default jupyter_server --output-dir=./artifacts
 
 The command above will run the `Default` variant of Schemathesis against the Jupyter Server target and will store
 all available artifacts in the `./artifacts` directory.
+
+Alternatively you can run it via ``poetry``:
+
+```
+poetry run wafp schemathesis:Default jupyter_server --output-dir=./artifacts
+```
 
 ## Fuzzing targets
 
@@ -174,6 +180,27 @@ The `artifacts` variable will contain container logs and Sentry events as Python
 
 WAFP uses the `GET /api/0/projects/{organization_slug}/{project_slug}/events/` endpoint to retrieve events data.
 See more info in Sentry documentation - https://docs.sentry.io/api/events/list-a-projects-events/
+
+## Fuzzers
+
+API fuzzers are also run via `docker-compose` and are available via a similar interface:
+
+```
+python -m wafp.fuzzers schemathesis:Default \
+  --schema=<Schema file or URL> \
+  --base-url=<Service base URL> \
+  --output-dir=./artifacts
+```
+
+Each fuzzer can be represented as one or more variants - you can have different running modes as different variants.
+For example, there are four different variants for Schemathesis:
+
+- `schemathesis:Default` - checks only for 5xx HTTP response codes
+- `schemathesis:AllChecks` - runs all available checks
+- `schemathesis:StatefulOld` - additionally execute stateful tests via Schemathesis's deprecated approach
+- `schemathesis:StatefulNew` - utilizes the state-machine-based stateful testing
+
+Fuzzers' names are derived from Python packages they are in - you can find them in the `./src/wafp/fuzzers/catalog` directory.
 
 ## Artifacts processing & data aggregation
 

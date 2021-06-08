@@ -2,6 +2,6 @@ version: '3'
 services:
   fuzzer:
     build:
-      context: https://github.com/schemathesis/schemathesis.git#a7d2bf10af368947f89f717c0eb7de648ad87a5a
+      context: https://github.com/schemathesis/schemathesis.git#6256be0be47b80095f6220a210fcd72054bdf505
     init: true
     network_mode: host

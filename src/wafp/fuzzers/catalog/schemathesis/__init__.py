@@ -43,6 +43,15 @@ class AllChecks(Default):
         return args
 
 
+class Negative(Default):
+    def get_entrypoint_args(
+        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str]
+    ) -> List[str]:
+        args = super().get_entrypoint_args(context, schema, base_url, headers)
+        args.append("--data-generation-method=negative")
+        return args
+
+
 class StatefulOld(Default):
     def get_entrypoint_args(
         self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str]

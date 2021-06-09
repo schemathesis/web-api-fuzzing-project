@@ -1,0 +1,10 @@
+version: '3'
+services:
+  web:
+    build:
+      context: https://github.com/mailhog/MailHog.git#0441dd494b03c9255a9b8e90e3458ebb115eacff
+    init: true
+    environment:
+      - PORT
+    ports:
+      - '${PORT-3000}:8025'

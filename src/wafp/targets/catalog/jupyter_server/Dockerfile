@@ -24,7 +24,7 @@ RUN pip install .
 RUN pip install tornado==6.1.0
 
 # Sentry integration
-RUN pip install --upgrade 'sentry-sdk'
+RUN pip install --upgrade 'sentry-sdk' aiocontextvars
 ENV SENTRY_DSN $SENTRY_DSN
 ENV WAFP_RUN_ID $WAFP_RUN_ID
 ENV PYTHONPATH /app

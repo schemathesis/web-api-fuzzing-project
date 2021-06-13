@@ -68,7 +68,7 @@ def main(
             build=cli_args.build,
             target=cli_args.target,
         ) as result:
-            output_dir.mkdir(exist_ok=True)
+            output_dir.mkdir(exist_ok=True, parents=True)
             fuzzer.process_artifacts(result, output_dir / "fuzzer")
             target.process_artifacts(
                 output_dir=output_dir / "target",

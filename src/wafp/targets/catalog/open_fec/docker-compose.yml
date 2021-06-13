@@ -20,6 +20,7 @@ services:
       - PORT
       - SENTRY_DSN
       - WAFP_RUN_ID
+      - WAFP_FUZZER_ID
       - SQLA_SAMPLE_DB_CONN=postgresql://test:test@db/test
       - SQLA_CONN=postgresql://test:test@db/test
     volumes:

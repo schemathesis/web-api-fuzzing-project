@@ -23,6 +23,7 @@ RUN pipenv install --deploy --system --dev
 RUN pip install --upgrade 'sentry-sdk'
 ENV SENTRY_DSN $SENTRY_DSN
 ENV WAFP_RUN_ID $WAFP_RUN_ID
+ENV WAFP_FUZZER_ID $WAFP_FUZZER_ID
 ENV PYTHONPATH /cccatalog-api/cccatalog-api
 COPY sitecustomize.py /cccatalog-api/cccatalog-api
 

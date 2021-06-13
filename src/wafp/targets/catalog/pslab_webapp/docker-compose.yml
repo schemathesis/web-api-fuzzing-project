@@ -16,6 +16,7 @@ services:
       - PORT
       - SENTRY_DSN
       - WAFP_RUN_ID
+      - WAFP_FUZZER_ID
       - DATABASE_URL=postgresql://postgres:test@db/test
     ports:
       - '${PORT-3000}:8080'

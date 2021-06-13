@@ -7,5 +7,6 @@ services:
       - PORT
       - SENTRY_DSN
       - WAFP_RUN_ID
+      - WAFP_FUZZER_ID
     ports:
       - '${PORT-3000}:8888'

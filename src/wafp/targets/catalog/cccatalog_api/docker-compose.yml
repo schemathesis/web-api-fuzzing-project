@@ -79,6 +79,7 @@ services:
       - AWS_ACCESS_KEY_ID
       - SENTRY_DSN
       - WAFP_RUN_ID
+      - WAFP_FUZZER_ID
     stdin_open: true
     tty: true
 

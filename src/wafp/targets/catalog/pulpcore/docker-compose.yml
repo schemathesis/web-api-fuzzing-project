@@ -16,6 +16,7 @@ services:
       - PORT
       - SENTRY_DSN
       - WAFP_RUN_ID
+      - WAFP_FUZZER_ID
     volumes:
       - .:/tmp
     ports:

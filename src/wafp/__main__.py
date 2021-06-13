@@ -59,7 +59,7 @@ def main(
     target = cli_args.get_target(catalog=targets_catalog)
     fuzzer = cli_args.get_fuzzer(catalog=fuzzers_catalog)
     output_dir = pathlib.Path(cli_args.output_dir)
-    with target.run(cli_args.no_cleanup) as context:
+    with target.run(cli_args.no_cleanup, extra_env={"WAFP_FUZZER_ID": cli_args.fuzzer}) as context:
         with fuzzer.run(
             schema=context.schema_location,
             base_url=context.base_url,

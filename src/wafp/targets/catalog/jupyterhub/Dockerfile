@@ -9,6 +9,7 @@ RUN pip install tornado==6.1.0
 RUN pip install --upgrade 'sentry-sdk'
 ENV SENTRY_DSN $SENTRY_DSN
 ENV WAFP_RUN_ID $WAFP_RUN_ID
+ENV WAFP_FUZZER_ID $WAFP_FUZZER_ID
 COPY jupyterhub /usr/local/bin/jupyterhub
 
 RUN echo 'root:test' | chpasswd

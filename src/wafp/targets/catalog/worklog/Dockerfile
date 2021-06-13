@@ -13,6 +13,7 @@ WORKDIR /app
 RUN pip install --upgrade 'sentry-sdk[flask]'
 ENV SENTRY_DSN $SENTRY_DSN
 ENV WAFP_RUN_ID $WAFP_RUN_ID
+ENV WAFP_FUZZER_ID $WAFP_FUZZER_ID
 ENV PYTHONPATH /app
 COPY sitecustomize.py /app
 

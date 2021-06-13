@@ -30,7 +30,7 @@ class BaseTarget(abc.ABC, Component):
     run_id: str = attr.ib(factory=generate_run_id)
     wait_target_ready_timeout: int = WAIT_TARGET_READY_TIMEOUT
 
-    def start(self) -> "TargetContext":
+    def start(self, extra_env: Optional[Dict[str, str]] = None) -> "TargetContext":
         """Start the target.
 
         It will be ready to serve requests after this method is called.
@@ -38,7 +38,7 @@ class BaseTarget(abc.ABC, Component):
         self.logger.msg("Start target")
         start = time.perf_counter()
         deadline = time.time() + self.wait_target_ready_timeout
-        self.compose.up(timeout=self.wait_target_ready_timeout, build=self.force_build)
+        self.compose.up(timeout=self.wait_target_ready_timeout, build=self.force_build, extra_env=extra_env)
         base_url = self.get_base_url()
         # Wait until base URL is accessible
         wait(base_url)
@@ -148,13 +148,15 @@ class BaseTarget(abc.ABC, Component):
         return artifacts
 
     @contextmanager
-    def run(self, no_cleanup: bool = False) -> Generator["TargetContext", None, None]:
+    def run(
+        self, no_cleanup: bool = False, extra_env: Optional[Dict[str, str]] = None
+    ) -> Generator["TargetContext", None, None]:
         """Run target as a context manager.
 
         It is a common workflow for CLI.
         """
         try:
-            yield self.start()
+            yield self.start(extra_env=extra_env)
         except subprocess.CalledProcessError as exc:
             sys.exit(exc.returncode)
         except TargetNotReady:

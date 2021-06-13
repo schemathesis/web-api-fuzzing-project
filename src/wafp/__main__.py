@@ -2,7 +2,7 @@ import argparse
 import pathlib
 import sys
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from . import fuzzers, targets
 from .docker import ensure_docker_version
@@ -44,6 +44,11 @@ class CliArguments(targets.cli.SharedCliArguments, fuzzers.cli.SharedCliArgument
             required=True,
             type=str,
         )
+
+    def get_target_kwargs(self) -> Dict[str, Any]:
+        kwargs = super().get_target_kwargs()
+        kwargs["force_build"] = self.build
+        return kwargs
 
 
 def main(

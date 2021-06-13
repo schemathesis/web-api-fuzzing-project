@@ -1,4 +1,5 @@
 import argparse
+import json
 import pathlib
 import sys
 from dataclasses import dataclass
@@ -76,7 +77,14 @@ def main(
                 sentry_project=cli_args.sentry_project,
                 sentry_organization=cli_args.sentry_organization,
             )
+    store_metadata(output_dir, cli_args.fuzzer, cli_args.target, target.run_id, result.duration)
     return result.completed_process.returncode
+
+
+def store_metadata(output_dir: pathlib.Path, fuzzer: str, target: str, run_id: str, duration: float) -> None:
+    data = {"fuzzer": fuzzer, "target": target, "run_id": run_id, "duration": duration}
+    with (output_dir / "metadata.json").open("w") as fd:
+        json.dump(data, fd)
 
 
 if __name__ == "__main__":

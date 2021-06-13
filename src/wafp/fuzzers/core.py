@@ -94,14 +94,9 @@ class BaseFuzzer(abc.ABC, Component):
             entrypoint=self.get_entrypoint(),
             volumes=self.get_volumes(context),
         )
-        self.logger.info(
-            "Finish fuzzer", returncode=completed_process.returncode, duration=round(time.perf_counter() - start, 2)
-        )
-        return FuzzResult(
-            fuzzer=self,
-            completed_process=completed_process,
-            context=context,
-        )
+        duration = round(time.perf_counter() - start, 2)
+        self.logger.info("Finish fuzzer", returncode=completed_process.returncode, duration=duration)
+        return FuzzResult(fuzzer=self, completed_process=completed_process, context=context, duration=duration)
 
     @contextmanager
     def run(
@@ -174,6 +169,8 @@ class FuzzResult:
     completed_process: subprocess.CompletedProcess = attr.ib()
     # Temporary directory that is expected to have all container's output - logs, failing test cases, etc
     context: FuzzerContext = attr.ib()
+    # How long did the fuzzing process take in seconds
+    duration: float = attr.ib()
 
     def collect_artifacts(self) -> List[Artifact]:
         """Extract fuzz run's artifacts."""

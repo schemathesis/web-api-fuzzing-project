@@ -1,9 +1,7 @@
 version: '3'
 services:
   web:
-    build:
-      context: https://github.com/ajnisbet/opentopodata.git#362045478d48f3f45e3d94afe681f2bb450cc9b1
-      dockerfile: docker/Dockerfile
+    build: .
     init: true
     environment:
       - PORT=3000

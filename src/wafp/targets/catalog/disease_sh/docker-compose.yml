@@ -3,6 +3,8 @@ version: "3"
 services:
   redis:
     image: redis:5.0.8-buster
+    volumes:
+      - ./redis_data:/data:ro
   web:
     build:
       context: https://github.com/disease-sh/API.git#744a95cc2eb511427e68cbe00c9224cd47873883

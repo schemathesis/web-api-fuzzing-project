@@ -37,3 +37,14 @@ impl fmt::Display for ProcessingError {
         }
     }
 }
+
+impl std::error::Error for ProcessingError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            ProcessingError::Glob(err) => Some(err),
+            ProcessingError::InvalidDirectoryName(_) => None,
+            ProcessingError::IO(err) => Some(err),
+            ProcessingError::Json(err) => Some(err),
+        }
+    }
+}

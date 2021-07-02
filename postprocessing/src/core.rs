@@ -12,15 +12,17 @@ pub fn process(
     directory: &Path,
     fuzzers: &[fuzzers::Fuzzer],
     targets: &[String],
+    indices: &[String],
 ) -> Result<(), ProcessingError> {
     // Glob pattern for collecting all items that are selected for processing
     let pattern = format!(
-        "{}/{}-{}-*",
+        "{}/{}-{}-{}",
         directory
             .to_str()
             .ok_or_else(|| ProcessingError::InvalidDirectoryName(directory.to_path_buf()))?,
         as_pattern(fuzzers),
-        as_pattern(targets)
+        as_pattern(targets),
+        as_pattern(indices)
     );
     let glob = Glob::new(&pattern)?.compile_matcher();
 
@@ -68,7 +70,7 @@ fn process_entry(entry: &fs::DirEntry) -> Result<(), ProcessingError> {
         || {
             let mut data_path = entry.path();
             data_path.push("fuzzer");
-            process_fuzzer(metadata.fuzzer, &data_path)
+            fuzzers::process(metadata.fuzzer, &data_path)
         },
         || {
             // TODO. implement target processing
@@ -82,19 +84,6 @@ fn read_metadata(path: &Path) -> Result<RunMetadata, ProcessingError> {
     let file = fs::File::open(path)?;
     let reader = BufReader::new(file);
     serde_json::from_reader(reader).map_err(ProcessingError::Json)
-}
-
-fn process_fuzzer(fuzzer: fuzzers::Fuzzer, path: &Path) -> Result<(), ProcessingError> {
-    match fuzzer {
-        fuzzers::Fuzzer::ApiFuzzer => fuzzers::api_fuzzer::process(path),
-        fuzzers::Fuzzer::TntFuzzer => Ok(()),
-        fuzzers::Fuzzer::Schemathesis(_kind) => Ok(()),
-        fuzzers::Fuzzer::Restler => Ok(()),
-        fuzzers::Fuzzer::Cats => Ok(()),
-        fuzzers::Fuzzer::SwaggerFuzzer => Ok(()),
-        fuzzers::Fuzzer::GotSwag => Ok(()),
-        fuzzers::Fuzzer::FuzzLightyear => Ok(()),
-    }
 }
 
 /// Convert a slice of items into a glob pattern.

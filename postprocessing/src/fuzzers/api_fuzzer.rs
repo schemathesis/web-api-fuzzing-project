@@ -1,9 +1,4 @@
-use std::path::Path;
-
-use crate::{
-    error::ProcessingError,
-    output::{FailureKind, TestCase, TestCaseResult},
-};
+use crate::output::TestCase;
 use regex::Regex;
 
 lazy_static::lazy_static! {
@@ -16,14 +11,7 @@ lazy_static::lazy_static! {
 
 const CURL_ERROR: &str = "pycurl.error: (3, '')";
 
-pub fn process(directory: &Path) -> Result<(), ProcessingError> {
-    let output_path = directory.join("stdout.txt");
-    let content = std::fs::read_to_string(output_path)?;
-    parse(&content);
-    Ok(())
-}
-
-pub fn parse(content: &str) {
+pub fn process_stdout(content: &str) {
     for block in TEST_CASE_RE.split(content) {
         let _result = parse_one(block);
         // TODO. store result
@@ -32,7 +20,7 @@ pub fn parse(content: &str) {
 
 fn parse_one(block: &str) -> TestCase {
     let capture = PATH_PARAMETERS_RE.captures(block);
-    let (method, url) = if let Some(cap) = capture {
+    let (method, path) = if let Some(cap) = capture {
         // URL contains path parameters - extract them
         let url = cap.get(1).expect("Always present").as_str();
         let method = METHOD_RE
@@ -51,22 +39,18 @@ fn parse_one(block: &str) -> TestCase {
     };
     if block.contains(CURL_ERROR) {
         // cURL error
-        TestCase::new(method, url, TestCaseResult::Error)
-    } else if let Some(mat) = STATUS_CODE_RE.captures(block) {
+        TestCase::error(method, path)
+    } else if let Some(captures) = STATUS_CODE_RE.captures(block) {
         // Failed with an unexpected status code
-        let status_code = mat
+        let status_code = captures
             .get(1)
             .expect("Always present")
             .as_str()
             .parse::<u16>()
             .expect("Valid status code");
-        TestCase::new(
-            method,
-            url,
-            TestCaseResult::Failure(FailureKind::UnexpectedStatusCode(status_code)),
-        )
+        TestCase::unexpected_status_code(method, path, status_code)
     } else {
         // Passed test
-        TestCase::new(method, url, TestCaseResult::Pass)
+        TestCase::pass(method, path)
     }
 }

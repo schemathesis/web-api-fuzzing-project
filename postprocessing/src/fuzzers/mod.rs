@@ -1,5 +1,8 @@
 pub mod api_fuzzer;
+pub mod cats;
+use crate::error::ProcessingError;
 use core::fmt;
+use std::path::Path;
 use std::str::FromStr;
 
 #[derive(Debug)]
@@ -91,4 +94,30 @@ impl fmt::Display for Fuzzer {
             Fuzzer::FuzzLightyear => f.write_str("fuzz_lightyear"),
         }
     }
+}
+
+fn read_stdout(directory: &Path) -> std::io::Result<String> {
+    let output_path = directory.join("stdout.txt");
+    std::fs::read_to_string(output_path)
+}
+
+pub(crate) fn process(fuzzer: Fuzzer, directory: &Path) -> Result<(), ProcessingError> {
+    match fuzzer {
+        Fuzzer::ApiFuzzer => {
+            let content = read_stdout(directory)?;
+            api_fuzzer::process_stdout(&content)
+        }
+        Fuzzer::TntFuzzer => {}
+        Fuzzer::Schemathesis(_kind) => {}
+        Fuzzer::Restler => {}
+        Fuzzer::Cats => {
+            //let content = read_stdout(directory)?;
+            //cats::process_stdout(&content);
+            cats::process_files(directory);
+        }
+        Fuzzer::SwaggerFuzzer => {}
+        Fuzzer::GotSwag => {}
+        Fuzzer::FuzzLightyear => {}
+    };
+    Ok(())
 }

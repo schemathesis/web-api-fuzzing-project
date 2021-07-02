@@ -19,9 +19,12 @@ struct Opt {
     /// Target output to process
     #[structopt(short, long)]
     target: Vec<String>,
+    /// Sequential run index
+    #[structopt(short, long)]
+    idx: Vec<String>,
 }
 
 fn main() {
     let opt = Opt::from_args();
-    core::process(&opt.directory, &opt.fuzzer, &opt.target).expect("Processing error");
+    core::process(&opt.directory, &opt.fuzzer, &opt.target, &opt.idx).expect("Processing error");
 }

@@ -1,26 +1,23 @@
-from typing import Any, Dict, Generator, List
+from typing import Any, Dict, List
 
 import requests
 
 
 def list_events(url: str, token: str, organization: str, project: str, run_id: str) -> List[Dict[str, Any]]:
-    headers = {"Authorization": f"Bearer {token}"}
-    response = requests.get(f"{url}api/0/projects/{organization}/{project}/events/?full=true", headers=headers)
-    response.raise_for_status()
     events: List[Dict[str, Any]] = []
-    events.extend(parse_events(response, run_id))
-    _, next_link = requests.utils.parse_header_links(response.headers["Link"])  # type: ignore
+    headers = {"Authorization": f"Bearer {token}"}
+    next_link = make_call(f"{url}api/0/projects/{organization}/{project}/events/?full=true", headers, events, run_id)
     while next_link["results"] == "true":
-        response = requests.get(next_link["url"], headers=headers)
-        response.raise_for_status()
-        events.extend(parse_events(response, run_id))
-        _, next_link = requests.utils.parse_header_links(response.headers["Link"])  # type: ignore
+        next_link = make_call(next_link["url"], headers, events, run_id)
     return events
 
 
-def parse_events(response: requests.Response, run_id: str) -> Generator[Dict[str, Any], None, None]:
+def make_call(url: str, headers: Dict[str, str], events: List[Dict[str, Any]], run_id: str) -> Dict[str, Any]:
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
     data = response.json()
-    return (event for event in data if has_tag(event, "wafp.run-id", run_id))
+    events.extend((event for event in data if has_tag(event, "wafp.run-id", run_id)))
+    return response.links["next"]
 
 
 def has_tag(event: Dict[str, Any], key: str, value: str) -> bool:

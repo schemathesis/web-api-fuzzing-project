@@ -28,7 +28,7 @@ class Default(BaseFuzzer):
 
 def extend_entrypoint_args(context: FuzzerContext, args: List[str]) -> None:
     """Add target-specific entrypoint arguments."""
-    if context.target == "age_of_empires_2_api":
+    if context.target.startswith("age_of_empires_2_api"):
         # Its schema combines `swagger` and `openapi` keywords
         # Schemathesis can force the schema version
         args.append("--force-schema-version=30")
@@ -69,6 +69,10 @@ class StatefulNew(BaseFuzzer):
         self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str]
     ) -> List[str]:
         filename = "test_stateful.py"
+        if context.target.startswith("age_of_empires_2_api"):
+            extra = {"force_schema_version": "30"}
+        else:
+            extra = {}
         test_file = context.input_directory / filename
         test_file.write_text(
             dedent(
@@ -86,7 +90,14 @@ if urlparse("{schema}").scheme != "":
 else:
     loader = schemathesis.from_path
 
-schema = loader("{schema}", base_url="{base_url}", validate_schema=False)
+extra = {extra}
+
+schema = loader(
+    "{schema}",
+    base_url="{base_url}",
+    validate_schema=False,
+    **extra
+)
 
 class APIWorkflow(schema.as_state_machine()):
 

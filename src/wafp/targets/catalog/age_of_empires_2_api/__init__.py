@@ -22,3 +22,13 @@ class Default(BaseTarget):
             validation_from_schema=False,
             specification=Specification(name=SpecificationType.OPENAPI, version="3.0.0"),
         )
+
+
+class Linked(Default):
+    def get_schema_location(self) -> str:
+        # API schema with the following links:
+        #  - GET /civilizations => GET /civilization/{id}
+        #  - GET /units => GET /unit/{id}
+        #  - GET /structures => GET /structure/{id}
+        #  - GET /technologies => GET /technology/{id}
+        return str(self.path / "schema-with-links.json")

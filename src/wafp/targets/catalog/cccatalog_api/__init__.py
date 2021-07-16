@@ -65,3 +65,12 @@ class Default(BaseTarget):
                 token_verification_url = match.groups()[0].decode().strip()
                 requests.get(token_verification_url)
                 break
+
+
+class Linked(Default):
+    def get_schema_location(self) -> str:
+        # API schema with the following links:
+        #  - GET /images => GET /images/{identifier}
+        #  - GET /images => GET /images/{identifier}/report
+        #  - GET /images => GET /recommendations/images/{identifier}
+        return str(self.path / "schema-with-links.json")

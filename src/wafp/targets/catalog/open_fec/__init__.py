@@ -24,3 +24,26 @@ class Default(BaseTarget):
             validation_from_schema=False,
             specification=Specification(name=SpecificationType.OPENAPI, version="2.0"),
         )
+
+
+class Linked(Default):
+    def get_schema_location(self) -> str:
+        # API schema with the following links:
+        #  GET /candidates/ -> GET /candidate/{candidate_id}/totals/
+        #  GET /candidates/ -> GET /candidate/{candidate_id}/history/{cycle}/
+        #  GET /candidates/ -> GET /candidate/{candidate_id}/history/
+        #  GET /candidates/ -> GET /candidate/{candidate_id}/filings/
+        #  GET /candidates/ -> GET /candidate/{candidate_id}/committees/history/{cycle}/
+        #  GET /candidates/ -> GET /candidate/{candidate_id}/committees/history/
+        #  GET /candidates/ -> GET /candidate/{candidate_id}/committees/
+        #  GET /candidates/ -> GET /candidate/{candidate_id}/
+        #  GET /committees/ -> GET /committee/{committee_id}/totals/
+        #  GET /committees/ -> GET /committee/{committee_id}/reports/
+        #  GET /committees/ -> GET /committee/{committee_id}/history/{cycle}/
+        #  GET /committees/ -> GET /committee/{committee_id}/history/
+        #  GET /committees/ -> GET /committee/{committee_id}/filings/
+        #  GET /committees/ -> GET /committee/{committee_id}/candidates/history/{cycle}/
+        #  GET /committees/ -> GET /committee/{committee_id}/candidates/history/
+        #  GET /committees/ -> GET /committee/{committee_id}/candidates/
+        #  GET /committees/ -> GET /committee/{committee_id}/
+        return str(self.path / "schema-with-links.json")

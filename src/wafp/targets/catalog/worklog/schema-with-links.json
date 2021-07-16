@@ -1,0 +1,661 @@
+{
+  "basePath": "/api/v1",
+  "definitions": {
+    "Credentials": {
+      "properties": {
+        "password": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Notes": {
+      "properties": {
+        "notes": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ResetCredentials": {
+      "properties": {
+        "new_password": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Settings": {
+      "properties": {
+        "holiday": {
+          "type": "integer"
+        },
+        "remote": {
+          "type": "integer"
+        },
+        "sick": {
+          "type": "integer"
+        },
+        "slack": {
+          "type": "string"
+        },
+        "vacation": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "host": "localhost:5000",
+  "info": {
+    "contact": {
+      "email": "maxshapiro32@ibm.com"
+    },
+    "description": "This is a work log for tracking different types of days for a user",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://github.com/IBM/worklog/blob/master/LICENSE"
+    },
+    "title": "Work Log",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/login": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "description": "User credentials for logging into account",
+            "in": "body",
+            "name": "data",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Credentials"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully logged in"
+          },
+          "400": {
+            "description": "Did not log in"
+          }
+        },
+        "summary": "Login to user account",
+        "tags": [
+          "Login"
+        ]
+      }
+    },
+    "/user/create": {
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "description": "User credentials for creating an account",
+            "in": "body",
+            "name": "data",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Credentials"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully created user account",
+            "x-links": {
+              "DELETE /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/delete",
+                "parameters": {
+                    "username": "$request.body#/username"
+                }
+              },
+              "GET /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/get",
+                "parameters": {
+                    "username": "$request.body#/username"
+                }
+              },
+              "POST /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/post",
+                "parameters": {
+                    "username": "$request.body#/username"
+                }
+              },
+              "PUT /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/put",
+                "parameters": {
+                    "username": "$request.body#/username"
+                }
+              },
+              "PUT /user/{username}/reset": {
+                "operationRef": "#/paths/~1user~1{username}~1reset/put",
+                "parameters": {
+                    "username": "$request.body#/username"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "User already exists or user not created"
+          }
+        },
+        "summary": "Create user",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/user/{username}": {
+      "delete": {
+        "description": "",
+        "parameters": [
+          {
+            "description": "The username associated with a user's account",
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Date to delete associated work log data. Follows the format 'YYYY-MM-DD'",
+            "in": "query",
+            "name": "date",
+            "type": "string"
+          },
+          {
+            "description": "Year to delete associated work log data. Requires deleteyear=true",
+            "in": "query",
+            "name": "year",
+            "type": "integer"
+          },
+          {
+            "description": "Boolen to determine if the user should be deleted",
+            "in": "query",
+            "name": "deleteuser",
+            "type": "boolean"
+          },
+          {
+            "description": "Boolean to determine if the all the user's work log data should be deleted",
+            "in": "query",
+            "name": "deleteall",
+            "type": "boolean"
+          },
+          {
+            "description": "Boolean to determine if the user's work log year data should be deleted. Requires year query parameter",
+            "in": "query",
+            "name": "deleteyear",
+            "type": "boolean"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted work log data or user",
+            "x-links": {
+              "DELETE /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/delete",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "GET /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/get",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "POST /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/post",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "PUT /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/put",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "PUT /user/{username}/reset": {
+                "operationRef": "#/paths/~1user~1{username}~1reset/put",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters given"
+          },
+          "403": {
+            "description": "Not logged in"
+          },
+          "404": {
+            "description": "No work log data or user to delete"
+          }
+        },
+        "summary": "Delete a user or work log data for a user",
+        "tags": [
+          "Users"
+        ]
+      },
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "description": "The username associated with a user's account",
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Date to get associated work log data. Follows the format 'YYYY-MM-DD'",
+            "in": "query",
+            "name": "date",
+            "type": "string"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully got requested work log data",
+            "x-links": {
+              "DELETE /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/delete",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "GET /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/get",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "POST /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/post",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "PUT /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/put",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "PUT /user/{username}/reset": {
+                "operationRef": "#/paths/~1user~1{username}~1reset/put",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters given"
+          },
+          "403": {
+            "description": "Not logged in"
+          },
+          "404": {
+            "description": "No work log data found"
+          }
+        },
+        "summary": "Get work log data about a user",
+        "tags": [
+          "Users"
+        ]
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "description": "",
+        "operationId": "handleUserData",
+        "parameters": [
+          {
+            "description": "The username associated with a user's account",
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Date to add work log data for. Follows the format 'YYYY-MM-DD'",
+            "in": "query",
+            "name": "date",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The specific type of day data",
+            "enum": [
+              "office",
+              "remote",
+              "vacation",
+              "holiday",
+              "sick"
+            ],
+            "in": "query",
+            "name": "type",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Location of remote work. Only required when type=remote",
+            "in": "query",
+            "name": "location",
+            "type": "string"
+          },
+          {
+            "description": "Optional notes to add for an entry",
+            "in": "body",
+            "name": "notes",
+            "schema": {
+              "$ref": "#/definitions/Notes"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully added work log data",
+            "x-links": {
+              "DELETE /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/delete",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "GET /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/get",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "POST /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/post",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "PUT /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/put",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "PUT /user/{username}/reset": {
+                "operationRef": "#/paths/~1user~1{username}~1reset/put",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters given"
+          },
+          "403": {
+            "description": "Not logged in"
+          }
+        },
+        "summary": "Add work log data for a user",
+        "tags": [
+          "Users"
+        ]
+      },
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "description": "The username associated with a user's account",
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Date to update associated work log data. Follows the format 'YYYY-MM-DD'",
+            "in": "query",
+            "name": "date",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The specific type of day data",
+            "enum": [
+              "office",
+              "remote",
+              "vacation",
+              "holiday",
+              "sick"
+            ],
+            "in": "query",
+            "name": "type",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Location of remote work. Only required when type=remote",
+            "in": "query",
+            "name": "location",
+            "type": "string"
+          },
+          {
+            "description": "Optional notes to add for an entry",
+            "in": "body",
+            "name": "notes",
+            "schema": {
+              "$ref": "#/definitions/Notes"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully updated work log data"
+          },
+          "400": {
+            "description": "Invalid parameters given"
+          },
+          "403": {
+            "description": "Not logged in"
+          },
+          "404": {
+            "description": "No work log data found"
+          }
+        },
+        "summary": "Update work log data for a user",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/user/{username}/reset": {
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "description": "The username associated with a user's account",
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "User credentials along with new password",
+            "in": "body",
+            "name": "data",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ResetCredentials"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully reset user's password",
+            "x-links": {
+              "DELETE /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/delete",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "GET /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/get",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "POST /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/post",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "PUT /user/{username}": {
+                "operationRef": "#/paths/~1user~1{username}/put",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              },
+              "PUT /user/{username}/reset": {
+                "operationRef": "#/paths/~1user~1{username}~1reset/put",
+                "parameters": {
+                    "username": "$request.path.username"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Did not reset user's password"
+          }
+        },
+        "summary": "Reset a user's password",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/user/{username}/settings": {
+      "get": {
+        "description": "",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully updated user's settings"
+          },
+          "403": {
+            "description": "Not logged in"
+          },
+          "404": {
+            "description": "No settings found"
+          }
+        },
+        "summary": "Gets a user's settings",
+        "tags": [
+          "Users"
+        ]
+      },
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "description": "Updated user settings. Requires at least one setting to be provided",
+            "in": "body",
+            "name": "data",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Settings"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully updated user's settings"
+          },
+          "400": {
+            "description": "No settings specified"
+          },
+          "403": {
+            "description": "Not logged in"
+          },
+          "404": {
+            "description": "No settings found"
+          }
+        },
+        "summary": "Updates a user's settings",
+        "tags": [
+          "Users"
+        ]
+      }
+    }
+  },
+  "schemes": [
+    "http"
+  ],
+  "swagger": "2.0",
+  "tags": [
+    {
+      "description": "Logging into a user account",
+      "name": "Login"
+    },
+    {
+      "description": "Operations associated with users",
+      "name": "Users"
+    }
+  ]
+}

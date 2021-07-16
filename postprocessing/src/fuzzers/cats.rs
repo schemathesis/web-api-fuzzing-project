@@ -73,15 +73,88 @@ fn is_skipped(case: &str) -> bool {
     case.contains("Skipped due to:")
 }
 
-static IGNORED_FUZZERS: [&str; 8] = [
+// These fuzzers only verify recommendations like naming style
+// Or presence of some good practices in the API schema
+static RECOMMENDATION_FUZZERS: &[&str] = &[
     "NamingsContractInfoFuzzer",
     "PathTagsContractInfoFuzzer",
     "RecommendedHeadersContractInfoFuzzer",
     "TopLevelElementsContractInfoFuzzer",
     "VersionsContractInfoFuzzer",
-    "XmlContentTypeContractInfoFuzzer",
+    // Missing security-related headers
     "CheckSecurityHeadersFuzzer",
+    // Path does not accept "application/xml" as Content-Type
+    "XmlContentTypeContractInfoFuzzer",
+];
+
+fn is_recommendation(fuzzer_name: &str) -> bool {
+    RECOMMENDATION_FUZZERS.contains(&fuzzer_name)
+}
+
+// These fuzzers do not apply to all situations
+// Some of them expect 2xx in any case, but the response itself returns 404 which makes them fail
+static NOT_UNIVERSAL_FUZZERS: &[&str] = &[
+    // Always expect 2xx codes
+    // Data itself might be not correct according to the backend validation rules
+    // Or it could be 404 because some object was not found in the DB
+    "LeadingSpacesInFieldsTrimValidateFuzzer",
+    "TrailingSpacesInFieldsTrimValidateFuzzer",
+    "HappyFuzzer",
+    "ExtraHeaderFuzzer",
+    "NewFieldsFuzzer",
+    "EmptyStringValuesInFieldsFuzzer",
+    "StringFormatAlmostValidValuesFuzzer",
+    "DuplicateHeaderFuzzer",
+    "SpacesOnlyInFieldsTrimValidateFuzzer",
+    // Always expect 400, 413, 414, 422 codes
+    // Data itself may be valid or there could be 404
+    "StringFieldsLeftBoundaryFuzzer",
+    "StringFieldsRightBoundaryFuzzer",
+    "StringFormatTotallyWrongValuesFuzzer",
+    "ExtremeNegativeValueIntegerFieldsFuzzer",
+    "ExtremePositiveValueInIntegerFieldsFuzzer",
+    "StringsInNumericFieldsFuzzer",
+    "BypassAuthenticationFuzzer",
+];
+
+fn is_not_universal(fuzzer_name: &str) -> bool {
+    NOT_UNIVERSAL_FUZZERS.contains(&fuzzer_name)
+}
+
+static IGNORED_FUZZERS: &[&str] = &[
+    // TODO: Should it be an error?
     "UnsupportedAcceptHeadersFuzzer",
+    // May be reasonable, but could be 5xx
+    "UnsupportedContentTypesHeadersFuzzer",
+    // TODO: If the value is not nullable, then it is similar to negative testing
+    "NullValuesInFieldsFuzzer",
+    // Not universal - could be 5xx or 2xx
+    "DummyRequestFuzzer",
+    // Not universal
+    // Not universal
+    "DummyAcceptHeadersFuzzer",
+    // TODO: Seems like negative testing
+    "RemoveFieldsFuzzer",
+    // Could be 5xx
+    "DummyContentTypeHeadersFuzzer",
+    // Not universal - could be anything
+    "VeryLargeStringsFuzzer",
+    // TODO. good point - it should be 405. But 5xx also may occur
+    "HttpMethodsFuzzer",
+    // TODO: Not universal - could be 404. What in case of 2xx?
+    "InvalidValuesInEnumsFieldsFuzzer",
+    // Not universal - could be 404
+    "ExtremeNegativeValueIntegerFieldsFuzzer",
+    "ExtremePositiveValueInIntegerFieldsFuzzer",
+    // TODO: is affected by "format"? It is a recommendation
+    "IntegerFieldsRightBoundaryFuzzer",
+    "IntegerFieldsLeftBoundaryFuzzer",
+    // Not universal - could be 404. Also it could be a short-circuit logic - skip all validation
+    // if some object is not found
+    "StringsInNumericFieldsFuzzer",
+    "DecimalValuesInIntegerFieldsFuzzer",
+    // Not universal - could be 404
+    "BypassAuthenticationFuzzer",
 ];
 /// Whether it is a fuzzer's failure.
 fn is_fuzzer_failure(case: &str) -> bool {
@@ -104,6 +177,9 @@ fn is_passed(case: &str) -> bool {
 fn is_response_conformance_error(string: &str) -> bool {
     string.contains("Response body does NOT match the contract!")
 }
+fn is_unexpected_response_status(string: &str) -> bool {
+    string.contains("Call returned as expected, but with undocumented code")
+}
 
 pub(crate) fn process_files(directory: &Path) -> Result<(), ProcessingError> {
     let paths: Vec<_> = fs::read_dir(directory)?
@@ -125,46 +201,73 @@ pub(crate) fn process_files(directory: &Path) -> Result<(), ProcessingError> {
 
 fn process_file(entry: &DirEntry) -> Result<Option<TestCase>, ProcessingError> {
     let data = read_json(entry)?;
-    if let Some(path) = data["path"].as_str() {
-        let details = data["resultDetails"].as_str().expect("Always a string");
-        if let Some(captures) = UNEXPECTED_RESPONSE_CODE_RE.captures(details) {
-            let status_code = captures
-                .get(1)
-                .expect("Always present")
-                .as_str()
-                .parse::<u16>()
-                .expect("Valid status code");
-            let method = data["response"]["httpMethod"]
-                .as_str()
-                .expect("Always present");
-            return Ok(Some(TestCase::unexpected_status_code(
-                method.to_owned(),
-                path.to_owned(),
-                status_code,
-            )));
-        }
-        let fuzzer = data["fuzzer"].as_str().expect("Always a string");
-        if is_ignored_result(details) || is_ignored_fuzzer(fuzzer) {
-            return Ok(None);
-        }
-
-        let method = data["response"]["httpMethod"]
-            .as_str()
-            .expect("Always present");
-        if is_response_conformance_error(details) {
-            return Ok(Some(TestCase::response_conformance(
-                method.to_owned(),
-                path.to_owned(),
-            )));
-        }
-        if is_passed(details) {
-            return Ok(Some(TestCase::pass(method.to_owned(), path.to_owned())));
-        }
-        //println!("{}", data);
-        Ok(Some(TestCase::pass(method.to_owned(), path.to_owned())))
-    } else {
-        Ok(None)
+    let fuzzer = data["fuzzer"].as_str().expect("Always a string");
+    let details = data["resultDetails"].as_str().expect("Always a string");
+    if is_fuzzer_failure(details) {
+        // TODO. return `error`
+        return Ok(None);
     }
+    let path = data["path"].as_str().expect("Always a string");
+    let method = data["response"]["httpMethod"]
+        .as_str()
+        .expect("Always present");
+    let status_code = data["response"]["responseCode"]
+        .as_u64()
+        .expect("Always present") as u16;
+    // Any 5xx response is treated as the "ServerError" case
+    // Many built-in fuzzers fails due to their expectations for 2xx or 4xx, but
+    // 5xx is not specifically reported. Sometimes 5xx is specified in the schema
+    // then the test is passed.
+    if status_code >= 500 && status_code < 600 {
+        return Ok(Some(TestCase::server_error(
+            method.to_owned(),
+            path.to_owned(),
+            status_code,
+        )));
+    }
+    if is_recommendation(fuzzer) {
+        // Not interesting at the research scope
+        return Ok(None);
+    }
+    if is_passed(details) {
+        // There are few cases:
+        //  - Response matches the contract defined in the schema
+        //  - Failure is expected
+        return Ok(Some(TestCase::pass(method.to_owned(), path.to_owned())));
+    }
+    if is_unexpected_response_status(details) {
+        // The response status code is not documented
+        return Ok(Some(TestCase::unexpected_status_code(
+            method.to_owned(),
+            path.to_owned(),
+            status_code,
+        )));
+    }
+    if is_response_conformance_error(details) {
+        // Response body does not match the contract
+        return Ok(Some(TestCase::response_conformance(
+            method.to_owned(),
+            path.to_owned(),
+        )));
+    }
+    if is_not_universal(fuzzer) {
+        // These failures can't be applied universally
+        return Ok(None);
+    }
+    // if status_code == 404 {
+    // Some fuzzers expect 2xx in all cases,
+    //    return Ok(None)
+    //}
+    // if fuzzer == "InvalidValuesInEnumsFieldsFuzzer" {
+    //     println!("{:?}", data)
+    // }
+    // if is_ignored_result(details) || is_ignored_fuzzer(fuzzer) {
+    //     return Ok(None);
+    // }
+
+    // TODO. should not be possible
+    //unreachable!("Unknown test case")
+    Ok(Some(TestCase::pass(method.to_owned(), path.to_owned())))
 }
 
 fn read_json(entry: &DirEntry) -> Result<Value, ProcessingError> {

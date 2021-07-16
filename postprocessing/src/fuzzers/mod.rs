@@ -1,7 +1,10 @@
 pub mod api_fuzzer;
 pub mod cats;
+use serde::ser::{SerializeSeq, Serializer};
+
 use crate::error::ProcessingError;
 use core::fmt;
+use std::fs;
 use std::path::Path;
 use std::str::FromStr;
 
@@ -105,7 +108,14 @@ pub(crate) fn process(fuzzer: Fuzzer, directory: &Path) -> Result<(), Processing
     match fuzzer {
         Fuzzer::ApiFuzzer => {
             let content = read_stdout(directory)?;
-            api_fuzzer::process_stdout(&content)
+            let output_path = directory.join("cases.json");
+            let output_file = fs::File::create(output_path)?;
+            let mut ser = serde_json::Serializer::new(output_file);
+            let mut seq = ser.serialize_seq(None)?;
+            for test_case in api_fuzzer::process_stdout(&content) {
+                seq.serialize_element(&test_case)?;
+            }
+            seq.end()?;
         }
         Fuzzer::TntFuzzer => {}
         Fuzzer::Schemathesis(_kind) => {}

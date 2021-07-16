@@ -1,5 +1,6 @@
 use crate::output::TestCase;
 use regex::Regex;
+use url::Url;
 
 lazy_static::lazy_static! {
     static ref TEST_CASE_RE: Regex = Regex::new(r"[0-9]+ \[INFO\] kitty: Current test: [0-9]+").expect("A valid regex");
@@ -11,16 +12,13 @@ lazy_static::lazy_static! {
 
 const CURL_ERROR: &str = "pycurl.error: (3, '')";
 
-pub fn process_stdout(content: &str) {
-    for block in TEST_CASE_RE.split(content) {
-        let _result = parse_one(block);
-        // TODO. store result
-    }
+pub fn process_stdout(content: &str) -> impl Iterator<Item = TestCase> {
+    TEST_CASE_RE.split(content).map(parse_one)
 }
 
 fn parse_one(block: &str) -> TestCase {
     let capture = PATH_PARAMETERS_RE.captures(block);
-    let (method, path) = if let Some(cap) = capture {
+    let (method, url) = if let Some(cap) = capture {
         // URL contains path parameters - extract them
         let url = cap.get(1).expect("Always present").as_str();
         let method = METHOD_RE
@@ -37,6 +35,7 @@ fn parse_one(block: &str) -> TestCase {
         let url = capture.get(2).expect("Always present").as_str();
         (method, url)
     };
+    let path = Url::parse(url).expect("A valid URL").path().to_string();
     if block.contains(CURL_ERROR) {
         // cURL error
         TestCase::error(method, path)

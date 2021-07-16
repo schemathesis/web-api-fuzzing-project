@@ -15,3 +15,10 @@ class Default(BaseTarget):
         return Metadata.flasgger(
             flask_version="1.1.2", flasgger_version="0.9.4", openapi_version="2.0", validation_from_schema=False
         )
+
+
+class Linked(Default):
+    def get_schema_location(self) -> str:
+        # API schema with the following links:
+        #  - GET /api/v1/prefectures => GET /api/v1/positives
+        return str(self.path / "schema-with-links.json")

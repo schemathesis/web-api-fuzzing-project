@@ -1,0 +1,99 @@
+{
+  "basePath": "",
+  "definitions": {},
+  "host": "covid19-japan-web-api.now.sh",
+  "info": {
+    "contact": {
+      "email": "saka_ro@yahoo.co.jp"
+    },
+    "description": "Web API to get COVID-19(coronavirus) information of each prefecture in Japan",
+    "license": {
+      "name": "MIT",
+      "url": "https://github.com/ryo-ma/covid19-japan-web-api/blob/master/LICENSE"
+    },
+    "termsOfService": "https://github.com/ryo-ma/covid19-japan-web-api/blob/master/README.md",
+    "title": "COVID19 Japan Web API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/positives": {
+      "get": {
+        "parameters": [
+          {
+            "description": "Specify the Japanese name. example - \u5343\u8449\u770c",
+            "in": "query",
+            "name": "prefecture",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success to get positives"
+          },
+          "400": {
+            "description": "The prefecture parameter is required"
+          },
+          "404": {
+            "description": "Does not find the prefecture"
+          }
+        },
+        "summary": "Get the total number of infected people and deaths in Japan"
+      }
+    },
+    "/api/v1/prefectures": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success to get the information of each prefecture",
+            "x-links": {
+              "GET /api/v1/positives": {
+                "parameters": {
+                  "prefecture": "$response.body#/0/name_ja"
+                },
+                "operationRef": "#/paths/~1api~1v1~1positives/get"
+              }
+            }
+          }
+        },
+        "summary": "Get the COVID-19(coronavirus) information of each prefecture in Japan"
+      }
+    },
+    "/api/v1/statistics": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success to get the statistics of each prefecture"
+          }
+        },
+        "summary": "Get the COVID-19(coronavirus) statistics of each prefecture in Japan"
+      }
+    },
+    "/api/v1/total": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "history",
+            "type": "boolean"
+          },
+          {
+            "in": "query",
+            "name": "predict",
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success to get total"
+          }
+        },
+        "summary": "Get the total number of infected people and deaths in Japan"
+      }
+    }
+  },
+  "schemes": [
+    "https"
+  ],
+  "swagger": "2.0"
+}

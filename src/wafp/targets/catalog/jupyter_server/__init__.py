@@ -38,3 +38,25 @@ class Default(BaseTarget):
             specification=Specification(name=SpecificationType.OPENAPI, version="2.0"),
             validation_from_schema=False,
         )
+
+
+class Linked(Default):
+    def get_schema_location(self) -> str:
+        # API schema with the following links:
+        #  PUT /api/contents/{path} -> POST /api/contents/{path}
+        #  PUT /api/contents/{path} -> PATCH /api/contents/{path}
+        #  PUT /api/contents/{path} -> DELETE /api/contents/{path}
+        #  PUT /api/contents/{path} -> GET /api/contents/{path}
+        #  PUT /api/contents/{path} -> POST /api/contents/{path}/checkpoints
+        #  POST /api/contents/{path}/checkpoints -> POST /api/contents/{path}/checkpoints/{checkpoint_id}
+        #  POST /api/contents/{path}/checkpoints -> DELETE /api/contents/{path}/checkpoints/{checkpoint_id}
+        #  POST /api/sessions -> GET /api/sessions/{session}
+        #  POST /api/sessions -> PATCH /api/sessions/{session}
+        #  POST /api/sessions -> DELETE /api/sessions/{session}
+        #  POST /api/kernels -> GET /api/kernels/{kernel_id}
+        #  POST /api/kernels -> DELETE /api/kernels/{kernel_id}
+        #  POST /api/kernels -> POST /api/kernels/{kernel_id}/interrupt
+        #  POST /api/kernels -> POST /api/kernels/{kernel_id}/restart
+        #  POST /api/terminals -> GET /api/terminals/{terminal_id}
+        #  POST /api/terminals -> DELETE /api/terminals/{terminal_id}
+        return str(self.path / "schema-with-links.json")

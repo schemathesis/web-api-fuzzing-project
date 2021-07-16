@@ -38,3 +38,29 @@ class Default(BaseTarget):
         response = requests.post(f"{base_url}/authorizations/token", json={"username": "root", "password": "test"})
         token = response.json()["token"]
         headers["Authorization"] = f"token {token}"
+
+
+class Linked(Default):
+    def get_schema_location(self) -> str:
+        # API schema with the following links:
+        #  POST /users -> GET /users/{name}
+        #  POST /users -> PATCH /users/{name}
+        #  POST /users -> DELETE /users/{name}
+        #  POST /users/{name} -> GET /users/{name}
+        #  POST /users/{name} -> PATCH /users/{name}
+        #  POST /users/{name} -> DELETE /users/{name}
+        #  POST /users/{name} -> POST /users/{name}/activity
+        #  POST /users/{name} -> POST /users/{name}/server
+        #  POST /users/{name} -> DELETE /users/{name}/server
+        #  POST /users/{name} -> POST /users/{name}/servers/{server_name}
+        #  POST /users/{name} -> GET /users/{name}/tokens
+        #  POST /users/{name} -> POST /users/{name}/tokens
+        #  POST /users/{name}/servers/{server_name} -> DELETE /users/{name}/servers/{server_name}
+        #  POST /users/{name}/tokens -> GET /users/{name}/tokens/{token_id}
+        #  POST /users/{name}/tokens -> DELETE /users/{name}/tokens/{token_id}
+        #  POST /groups/{name} -> GET /groups/{name}
+        #  POST /groups/{name} -> DELETE /groups/{name}
+        #  POST /groups/{name} -> POST /groups/{name}/users
+        #  POST /groups/{name} -> DELETE /groups/{name}/users
+        #  POST /authorizations/token -> GET /authorizations/token/{token}
+        return str(self.path / "schema-with-links.json")

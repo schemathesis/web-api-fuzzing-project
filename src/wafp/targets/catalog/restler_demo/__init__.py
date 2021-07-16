@@ -21,3 +21,15 @@ class Default(BaseTarget):
             validation_from_schema=False,
             specification=Specification(name=SpecificationType.OPENAPI, version="2.0"),
         )
+
+
+class Linked(Default):
+    def get_schema_location(self) -> str:
+        # API schema with the following links:
+        #  POST /blog/posts -> DELETE /blog/posts/{postId}
+        #  POST /blog/posts -> GET /blog/posts/{postId}
+        #  POST /blog/posts -> PUT /blog/posts/{postId}
+        #  DELETE /blog/posts/{postId} -> DELETE /blog/posts/{postId}
+        #  DELETE /blog/posts/{postId} -> GET /blog/posts/{postId}
+        #  DELETE /blog/posts/{postId} -> PUT /blog/posts/{postId}
+        return str(self.path / "schema-with-links.json")

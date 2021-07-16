@@ -37,3 +37,73 @@ class Default(BaseTarget):
             specification=Specification(name=SpecificationType.OPENAPI, version="2.0"),
             validation_from_schema=False,
         )
+
+
+class Linked(Default):
+    def get_schema_location(self) -> str:
+        # API schema with the following links:
+        #  POST /api/baskets/{name} -> POST /api/baskets/{name}
+        #  POST /api/baskets/{name} -> GET /api/baskets/{name}
+        #  POST /api/baskets/{name} -> PUT /api/baskets/{name}
+        #  POST /api/baskets/{name} -> DELETE /api/baskets/{name}
+        #  POST /api/baskets/{name} -> GET /api/baskets/{name}/responses/{method}
+        #  POST /api/baskets/{name} -> PUT /api/baskets/{name}/responses/{method}
+        #  POST /api/baskets/{name} -> GET /api/baskets/{name}/requests
+        #  POST /api/baskets/{name} -> DELETE /api/baskets/{name}/requests
+        #  GET /api/baskets/{name} -> POST /api/baskets/{name}
+        #  GET /api/baskets/{name} -> GET /api/baskets/{name}
+        #  GET /api/baskets/{name} -> PUT /api/baskets/{name}
+        #  GET /api/baskets/{name} -> DELETE /api/baskets/{name}
+        #  GET /api/baskets/{name} -> GET /api/baskets/{name}/responses/{method}
+        #  GET /api/baskets/{name} -> PUT /api/baskets/{name}/responses/{method}
+        #  GET /api/baskets/{name} -> GET /api/baskets/{name}/requests
+        #  GET /api/baskets/{name} -> DELETE /api/baskets/{name}/requests
+        #  PUT /api/baskets/{name} -> POST /api/baskets/{name}
+        #  PUT /api/baskets/{name} -> GET /api/baskets/{name}
+        #  PUT /api/baskets/{name} -> PUT /api/baskets/{name}
+        #  PUT /api/baskets/{name} -> DELETE /api/baskets/{name}
+        #  PUT /api/baskets/{name} -> GET /api/baskets/{name}/responses/{method}
+        #  PUT /api/baskets/{name} -> PUT /api/baskets/{name}/responses/{method}
+        #  PUT /api/baskets/{name} -> GET /api/baskets/{name}/requests
+        #  PUT /api/baskets/{name} -> DELETE /api/baskets/{name}/requests
+        #  DELETE /api/baskets/{name} -> POST /api/baskets/{name}
+        #  DELETE /api/baskets/{name} -> GET /api/baskets/{name}
+        #  DELETE /api/baskets/{name} -> PUT /api/baskets/{name}
+        #  DELETE /api/baskets/{name} -> DELETE /api/baskets/{name}
+        #  DELETE /api/baskets/{name} -> GET /api/baskets/{name}/responses/{method}
+        #  DELETE /api/baskets/{name} -> PUT /api/baskets/{name}/responses/{method}
+        #  DELETE /api/baskets/{name} -> GET /api/baskets/{name}/requests
+        #  DELETE /api/baskets/{name} -> DELETE /api/baskets/{name}/requests
+        #  GET /api/baskets/{name}/responses/{method} -> POST /api/baskets/{name}
+        #  GET /api/baskets/{name}/responses/{method} -> GET /api/baskets/{name}
+        #  GET /api/baskets/{name}/responses/{method} -> PUT /api/baskets/{name}
+        #  GET /api/baskets/{name}/responses/{method} -> DELETE /api/baskets/{name}
+        #  GET /api/baskets/{name}/responses/{method} -> GET /api/baskets/{name}/responses/{method}
+        #  GET /api/baskets/{name}/responses/{method} -> PUT /api/baskets/{name}/responses/{method}
+        #  GET /api/baskets/{name}/responses/{method} -> GET /api/baskets/{name}/requests
+        #  GET /api/baskets/{name}/responses/{method} -> DELETE /api/baskets/{name}/requests
+        #  PUT /api/baskets/{name}/responses/{method} -> POST /api/baskets/{name}
+        #  PUT /api/baskets/{name}/responses/{method} -> GET /api/baskets/{name}
+        #  PUT /api/baskets/{name}/responses/{method} -> PUT /api/baskets/{name}
+        #  PUT /api/baskets/{name}/responses/{method} -> DELETE /api/baskets/{name}
+        #  PUT /api/baskets/{name}/responses/{method} -> GET /api/baskets/{name}/responses/{method}
+        #  PUT /api/baskets/{name}/responses/{method} -> PUT /api/baskets/{name}/responses/{method}
+        #  PUT /api/baskets/{name}/responses/{method} -> GET /api/baskets/{name}/requests
+        #  PUT /api/baskets/{name}/responses/{method} -> DELETE /api/baskets/{name}/requests
+        #  GET /api/baskets/{name}/requests -> POST /api/baskets/{name}
+        #  GET /api/baskets/{name}/requests -> GET /api/baskets/{name}
+        #  GET /api/baskets/{name}/requests -> PUT /api/baskets/{name}
+        #  GET /api/baskets/{name}/requests -> DELETE /api/baskets/{name}
+        #  GET /api/baskets/{name}/requests -> GET /api/baskets/{name}/responses/{method}
+        #  GET /api/baskets/{name}/requests -> PUT /api/baskets/{name}/responses/{method}
+        #  GET /api/baskets/{name}/requests -> GET /api/baskets/{name}/requests
+        #  GET /api/baskets/{name}/requests -> DELETE /api/baskets/{name}/requests
+        #  DELETE /api/baskets/{name}/requests -> POST /api/baskets/{name}
+        #  DELETE /api/baskets/{name}/requests -> GET /api/baskets/{name}
+        #  DELETE /api/baskets/{name}/requests -> PUT /api/baskets/{name}
+        #  DELETE /api/baskets/{name}/requests -> DELETE /api/baskets/{name}
+        #  DELETE /api/baskets/{name}/requests -> GET /api/baskets/{name}/responses/{method}
+        #  DELETE /api/baskets/{name}/requests -> PUT /api/baskets/{name}/responses/{method}
+        #  DELETE /api/baskets/{name}/requests -> GET /api/baskets/{name}/requests
+        #  DELETE /api/baskets/{name}/requests -> DELETE /api/baskets/{name}/requests
+        return str(self.path / "schema-with-links.yaml")

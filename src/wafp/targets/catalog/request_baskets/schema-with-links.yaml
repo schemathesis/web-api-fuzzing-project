@@ -1,0 +1,1196 @@
+############################################
+# RESTful API for Request Baskets service
+#
+swagger: '2.0'
+
+info:
+  version: '1.0.0'
+  title: Request Baskets API
+  description: |
+      RESTful API of [Request Baskets](https://rbaskets.in) service.
+
+      Request Baskets is an open source project of a service to collect HTTP requests and inspect them via RESTful
+      API or web UI.
+
+      Check out the [project page](https://github.com/darklynx/request-baskets) for more detailed description.
+  contact:
+    name: darklynx
+    url: https://github.com/darklynx
+  license:
+    name: MIT
+    url: https://github.com/darklynx/request-baskets/blob/master/LICENSE
+
+host: rbaskets.in
+basePath: /
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# Groups and their descriptions
+tags:
+  - name: service
+    description: Service information
+  - name: baskets
+    description: Manage baskets
+  - name: responses
+    description: Configure basket responses
+  - name: requests
+    description: Manage collected requests
+
+# Security (maybe use custom header, e.g. basket_key, basket_token)
+securityDefinitions:
+  basket_token:
+    description: Basket assigned secure token
+    type: apiKey
+    name: Authorization
+    in: header
+  service_token:
+    description: Service master token
+    type: apiKey
+    name: Authorization
+    in: header
+
+# URL patterns
+paths:
+  /api/version:
+    get:
+      tags:
+        - service
+      summary: Get service version
+      description: Get service version.
+      responses:
+        200:
+          description: OK. Returns service version.
+          schema:
+            $ref: '#/definitions/Version'
+
+  /api/stats:
+    get:
+      tags:
+        - baskets
+      summary: Get baskets statistics
+      description: Get service statistics about baskets and collected HTTP requests. Require master token.
+      parameters:
+        - name: max
+          in: query
+          type: integer
+          description: Maximum number of basket names to return; default 5
+          required: false
+      responses:
+        200:
+          description: OK. Returns service statistics.
+          schema:
+            $ref: '#/definitions/ServiceStats'
+        401:
+          description: Unauthorized. Invalid or missing master token
+      security:
+        - service_token: []
+
+  /api/baskets:
+    get:
+      tags:
+        - baskets
+      summary: Get baskets
+      description: Fetches a list of basket names managed by service. Require master token.
+      parameters:
+        - name: max
+          in: query
+          type: integer
+          description: Maximum number of basket names to return; default 20
+          required: false
+        - name: skip
+          in: query
+          type: integer
+          description: Number of basket names to skip; default 0
+          required: false
+        - name: q
+          in: query
+          type: string
+          description: Query string to filter result, only those basket names that match the query will be included in response
+          required: false
+      responses:
+        200:
+          description: OK. Returns list of available baskets.
+          schema:
+            $ref: '#/definitions/Baskets'
+        204:
+          description: No Content. No baskets available for specified limits
+        401:
+          description: Unauthorized. Invalid or missing master token
+      security:
+        - service_token: []
+
+  /api/baskets/{name}:
+    post:
+      tags:
+        - baskets
+      summary: Create new basket
+      description: Creates a new basket with this name.
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The name of new basket
+          required: true
+        - name: config
+          in: body
+          description: Basket configuration
+          required: false
+          schema:
+            $ref: '#/definitions/Config'
+      responses:
+        201:
+          description: Created. Indicates that basket is successfully created
+          schema:
+            $ref: '#/definitions/Token'
+          x-links:
+            "POST /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/post"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/put"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/delete"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/put"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/get"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/delete"
+              parameters:
+                name: "$request.path.name"
+        400:
+          description: Bad Request. Failed to parse JSON into basket configuration object.
+        403:
+          description: Forbidden. Indicates that basket name conflicts with reserved paths; e.g. `baskets`, `web`, etc.
+        409:
+          description: Conflict. Indicates that basket with such name already exists
+        422:
+          description: Unprocessable Entity. Basket configuration is not valid.
+    get:
+      tags:
+        - baskets
+      summary: Get basket settings
+      description: Retrieves configuration settings of this basket.
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The basket name
+          required: true
+      responses:
+        200:
+          description: OK. Returns basket configuration
+          schema:
+            $ref: '#/definitions/Config'
+          x-links:
+            "POST /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/post"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/put"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/delete"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/put"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/get"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/delete"
+              parameters:
+                name: "$request.path.name"
+        401:
+          description: Unauthorized. Invalid or missing basket token
+        404:
+          description: Not Found. No basket with such name
+      security:
+        - basket_token: []
+    put:
+      tags:
+        - baskets
+      summary: Update basket settings
+      description: |
+        Updates configuration settings of this basket.
+
+        Special configuration parameters for request forwarding:
+          * `insecure_tls` controls certificate verification when forwarding requests. Setting this parameter to `true`
+          allows to forward collected HTTP requests via HTTPS protocol even if the forward end-point is configured with
+          self-signed TLS/SSL certificate. **Warning:** enabling this feature has known security implications.
+          * `expand_path` changes the logic of constructing taget URL when forwarding requests. If this parameter is
+          set to `true` the forward URL path will be expanded when original HTTP request contains compound path. For
+          example, a basket with name **server1** is configured to forward all requests to `http://server1.intranet:8001/myservice`
+          and it has received an HTTP request like `GET http://baskets.example.com/server1/component/123/events?status=OK`
+          then depending on `expand_path` settings the request will be forwarded to:
+            * `true` => `GET http://server1.intranet:8001/myservice/component/123/events?status=OK`
+            * `false` => `GET http://server1.intranet:8001/myservice?status=OK`
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The basket name
+          required: true
+        - name: config
+          in: body
+          description: New configuration to apply
+          required: true
+          schema:
+            $ref: '#/definitions/Config'
+      responses:
+        204:
+          description: No Content. Basket configuration is updated
+          x-links:
+            "POST /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/post"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/put"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/delete"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/put"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/get"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/delete"
+              parameters:
+                name: "$request.path.name"
+        400:
+          description: Bad Request. Failed to parse JSON into basket configuration object.
+        401:
+          description: Unauthorized. Invalid or missing basket token
+        404:
+          description: Not Found. No basket with such name
+        422:
+          description: Unprocessable Entity. Basket configuration is not valid.
+      security:
+        - basket_token: []
+    delete:
+      tags:
+        - baskets
+      summary: Delete basket
+      description: Permanently deletes this basket and all collected requests.
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The basket name
+          required: true
+      responses:
+        204:
+          description: No Content. Basket is deleted
+          x-links:
+            "POST /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/post"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/put"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/delete"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/put"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/get"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/delete"
+              parameters:
+                name: "$request.path.name"
+        401:
+          description: Unauthorized. Invalid or missing basket token
+        404:
+          description: Not Found. No basket with such name
+      security:
+        - basket_token: []
+
+  /api/baskets/{name}/responses/{method}:
+    get:
+      tags:
+        - responses
+      summary: Get response settings
+      description: |
+          Retrieves information about configured response of the basket. Service will reply with this response to any
+          HTTP request sent to the basket with appropriate HTTP method.
+
+          If nothing is configured, the default response is HTTP 200 - OK with empty content.
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The basket name
+          required: true
+        - name: method
+          in: path
+          type: string
+          enum: [ "GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "CONNECT", "OPTIONS", "TRACE" ]
+          description: The HTTP method this response is configured for
+          required: true
+      responses:
+        200:
+          description: OK. Returns configured response information
+          schema:
+            $ref: '#/definitions/Response'
+          x-links:
+            "POST /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/post"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/put"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/delete"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/put"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/get"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/delete"
+              parameters:
+                name: "$request.path.name"
+        401:
+          description: Unauthorized. Invalid or missing basket token
+        404:
+          description: Not Found. No basket with such name
+      security:
+        - basket_token: []
+    put:
+      tags:
+        - responses
+      summary: Update response settings
+      description: |
+          Allows to configure HTTP response of this basket. The service will reply with configured response to any HTTP
+          request sent to the basket with appropriate HTTP method.
+
+          If nothing is configured, the default response is HTTP 200 - OK with empty content.
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The basket name
+          required: true
+        - name: method
+          in: path
+          type: string
+          enum: [ "GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "CONNECT", "OPTIONS", "TRACE" ]
+          description: The HTTP method this response is configured for
+          required: true
+        - name: response
+          in: body
+          description: HTTP response configuration
+          required: true
+          schema:
+            $ref: '#/definitions/Response'
+      responses:
+        204:
+          description: No Content. Response configuration is updated
+          x-links:
+            "POST /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/post"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/put"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/delete"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/put"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/get"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/delete"
+              parameters:
+                name: "$request.path.name"
+        400:
+          description: Bad Request. Failed to parse JSON into response configuration object.
+        401:
+          description: Unauthorized. Invalid or missing basket token
+        404:
+          description: Not Found. No basket with such name
+        422:
+          description: Unprocessable Entity. Response configuration is not valid.
+      security:
+        - basket_token: []
+
+  /api/baskets/{name}/requests:
+    get:
+      tags:
+        - requests
+      summary: Get collected requests
+      description: Fetches collection of requests collected by this basket.
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The basket name
+          required: true
+        - name: max
+          in: query
+          type: integer
+          description: Maximum number of requests to return; default 20
+          required: false
+        - name: skip
+          in: query
+          type: integer
+          description: Number of requests to skip; default 0
+          required: false
+        - name: q
+          in: query
+          type: string
+          description: Query string to filter result, only requests that match the query will be included in response
+          required: false
+        - name: in
+          in: query
+          type: string
+          enum: [ 'any', 'body', 'query', 'headers' ]
+          description: |
+            Defines what is taken into account when filtering is applied: `body` - search in content body of collected requests,
+            `query` - search among query parameters of collected requests, `headers` - search among request header values,
+            `any` - search anywhere; default `any`
+          required: false
+      responses:
+        200:
+          description: OK. Returns list of basket requests.
+          schema:
+            $ref: '#/definitions/Requests'
+          x-links:
+            "POST /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/post"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/put"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/delete"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/put"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/get"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/delete"
+              parameters:
+                name: "$request.path.name"
+        204:
+          description: No Content. No requests found for specified limits
+        401:
+          description: Unauthorized. Invalid or missing basket token
+        404:
+          description: Not Found. No basket with such name
+      security:
+        - basket_token: []
+    delete:
+      tags:
+        - requests
+      summary: Delete all requests
+      description: Deletes all requests collected by this basket.
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The basket name
+          required: true
+      responses:
+        204:
+          description: No Content. Basket requests are cleared
+          x-links:
+            "POST /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/post"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/put"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}":
+              operationRef: "#/paths/~1api~1baskets~1{name}/delete"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/get"
+              parameters:
+                name: "$request.path.name"
+            "PUT /api/baskets/{name}/responses/{method}":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1responses~1{method}/put"
+              parameters:
+                name: "$request.path.name"
+            "GET /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/get"
+              parameters:
+                name: "$request.path.name"
+            "DELETE /api/baskets/{name}/requests":
+              operationRef: "#/paths/~1api~1baskets~1{name}~1requests/delete"
+              parameters:
+                name: "$request.path.name"
+        401:
+          description: Unauthorized. Invalid or missing basket token
+        404:
+          description: Not Found. No basket with such name
+      security:
+        - basket_token: []
+
+  /baskets:
+    get:
+      tags:
+        - baskets
+      summary: Get baskets
+      deprecated: true
+      description: Fetches a list of basket names managed by service. Require master token.
+      parameters:
+        - name: max
+          in: query
+          type: integer
+          description: Maximum number of basket names to return; default 20
+          required: false
+        - name: skip
+          in: query
+          type: integer
+          description: Number of basket names to skip; default 0
+          required: false
+        - name: q
+          in: query
+          type: string
+          description: Query string to filter result, only those basket names that match the query will be included in response
+          required: false
+      responses:
+        200:
+          description: OK. Returns list of available baskets.
+          schema:
+            $ref: '#/definitions/Baskets'
+        204:
+          description: No Content. No baskets available for specified limits
+        401:
+          description: Unauthorized. Invalid or missing master token
+      security:
+        - service_token: []
+
+  /baskets/{name}:
+    post:
+      tags:
+        - baskets
+      summary: Create new basket
+      deprecated: true
+      description: Creates a new basket with this name.
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The name of new basket
+          required: true
+        - name: config
+          in: body
+          description: Basket configuration
+          required: false
+          schema:
+            $ref: '#/definitions/Config'
+      responses:
+        201:
+          description: Created. Indicates that basket is successfully created
+          schema:
+            $ref: '#/definitions/Token'
+        400:
+          description: Bad Request. Failed to parse JSON into basket configuration object.
+        403:
+          description: Forbidden. Indicates that basket name conflicts with reserved paths; e.g. `baskets`, `web`, etc.
+        409:
+          description: Conflict. Indicates that basket with such name already exists
+        422:
+          description: Unprocessable Entity. Basket configuration is not valid.
+    get:
+      tags:
+        - baskets
+      summary: Get basket settings
+      deprecated: true
+      description: Retrieves configuration settings of this basket.
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The basket name
+          required: true
+      responses:
+        200:
+          description: OK. Returns basket configuration
+          schema:
+            $ref: '#/definitions/Config'
+        401:
+          description: Unauthorized. Invalid or missing basket token
+        404:
+          description: Not Found. No basket with such name
+      security:
+        - basket_token: []
+    put:
+      tags:
+        - baskets
+      summary: Update basket settings
+      deprecated: true
+      description: |
+        Updates configuration settings of this basket.
+
+        Special configuration parameters for request forwarding:
+          * `insecure_tls` controls certificate verification when forwarding requests. Setting this parameter to `true`
+          allows to forward collected HTTP requests via HTTPS protocol even if the forward end-point is configured with
+          self-signed TLS/SSL certificate. **Warning:** enabling this feature has known security implications.
+          * `expand_path` changes the logic of constructing taget URL when forwarding requests. If this parameter is
+          set to `true` the forward URL path will be expanded when original HTTP request contains compound path. For
+          example, a basket with name **server1** is configured to forward all requests to `http://server1.intranet:8001/myservice`
+          and it has received an HTTP request like `GET http://baskets.example.com/server1/component/123/events?status=OK`
+          then depending on `expand_path` settings the request will be forwarded to:
+            * `true` => `GET http://server1.intranet:8001/myservice/component/123/events?status=OK`
+            * `false` => `GET http://server1.intranet:8001/myservice?status=OK`
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The basket name
+          required: true
+        - name: config
+          in: body
+          description: New configuration to apply
+          required: true
+          schema:
+            $ref: '#/definitions/Config'
+      responses:
+        204:
+          description: No Content. Basket configuration is updated
+        400:
+          description: Bad Request. Failed to parse JSON into basket configuration object.
+        401:
+          description: Unauthorized. Invalid or missing basket token
+        404:
+          description: Not Found. No basket with such name
+        422:
+          description: Unprocessable Entity. Basket configuration is not valid.
+      security:
+        - basket_token: []
+    delete:
+      tags:
+        - baskets
+      summary: Delete basket
+      deprecated: true
+      description: Permanently deletes this basket and all collected requests.
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The basket name
+          required: true
+      responses:
+        204:
+          description: No Content. Basket is deleted
+        401:
+          description: Unauthorized. Invalid or missing basket token
+        404:
+          description: Not Found. No basket with such name
+      security:
+        - basket_token: []
+
+  /baskets/{name}/responses/{method}:
+    get:
+      tags:
+        - responses
+      summary: Get response settings
+      deprecated: true
+      description: |
+          Retrieves information about configured response of the basket. Service will reply with this response to any
+          HTTP request sent to the basket with appropriate HTTP method.
+
+          If nothing is configured, the default response is HTTP 200 - OK with empty content.
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The basket name
+          required: true
+        - name: method
+          in: path
+          type: string
+          enum: [ "GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "CONNECT", "OPTIONS", "TRACE" ]
+          description: The HTTP method this response is configured for
+          required: true
+      responses:
+        200:
+          description: OK. Returns configured response information
+          schema:
+            $ref: '#/definitions/Response'
+        401:
+          description: Unauthorized. Invalid or missing basket token
+        404:
+          description: Not Found. No basket with such name
+      security:
+        - basket_token: []
+    put:
+      tags:
+        - responses
+      summary: Update response settings
+      deprecated: true
+      description: |
+          Allows to configure HTTP response of this basket. The service will reply with configured response to any HTTP
+          request sent to the basket with appropriate HTTP method.
+
+          If nothing is configured, the default response is HTTP 200 - OK with empty content.
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The basket name
+          required: true
+        - name: method
+          in: path
+          type: string
+          enum: [ "GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "CONNECT", "OPTIONS", "TRACE" ]
+          description: The HTTP method this response is configured for
+          required: true
+        - name: response
+          in: body
+          description: HTTP response configuration
+          required: true
+          schema:
+            $ref: '#/definitions/Response'
+      responses:
+        204:
+          description: No Content. Response configuration is updated
+        400:
+          description: Bad Request. Failed to parse JSON into response configuration object.
+        401:
+          description: Unauthorized. Invalid or missing basket token
+        404:
+          description: Not Found. No basket with such name
+        422:
+          description: Unprocessable Entity. Response configuration is not valid.
+      security:
+        - basket_token: []
+
+  /baskets/{name}/requests:
+    get:
+      tags:
+        - requests
+      summary: Get collected requests
+      deprecated: true
+      description: Fetches collection of requests collected by this basket.
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The basket name
+          required: true
+        - name: max
+          in: query
+          type: integer
+          description: Maximum number of requests to return; default 20
+          required: false
+        - name: skip
+          in: query
+          type: integer
+          description: Number of requests to skip; default 0
+          required: false
+        - name: q
+          in: query
+          type: string
+          description: Query string to filter result, only requests that match the query will be included in response
+          required: false
+        - name: in
+          in: query
+          type: string
+          enum: [ 'any', 'body', 'query', 'headers' ]
+          description: |
+            Defines what is taken into account when filtering is applied: `body` - search in content body of collected requests,
+            `query` - search among query parameters of collected requests, `headers` - search among request header values,
+            `any` - search anywhere; default `any`
+          required: false
+      responses:
+        200:
+          description: OK. Returns list of basket requests.
+          schema:
+            $ref: '#/definitions/Requests'
+        204:
+          description: No Content. No requests found for specified limits
+        401:
+          description: Unauthorized. Invalid or missing basket token
+        404:
+          description: Not Found. No basket with such name
+      security:
+        - basket_token: []
+    delete:
+      tags:
+        - requests
+      summary: Delete all requests
+      deprecated: true
+      description: Deletes all requests collected by this basket.
+      parameters:
+        - name: name
+          in: path
+          type: string
+          description: The basket name
+          required: true
+      responses:
+        204:
+          description: No Content. Basket requests are cleared
+        401:
+          description: Unauthorized. Invalid or missing basket token
+        404:
+          description: Not Found. No basket with such name
+      security:
+        - basket_token: []
+
+# Model
+definitions:
+  Version:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Service name
+        example: request-baskets
+      version:
+        type: string
+        description: Service version
+        example: v1.0.0
+      commit:
+        type: string
+        description: Git commit this service is build from
+        example: 4cc08434223ff04fbe2e45f2f6eeb9b0a39a279e
+      commit_short:
+        type: string
+        description: Short form of git commit this service is build from
+        example: 4cc0843
+      source_code:
+        type: string
+        description: URL of the source code repository
+        example: https://github.com/darklynx/request-baskets
+
+  ServiceStats:
+    type: object
+    properties:
+      baskets_count:
+        type: integer
+        description: Total number of baskets managed by service
+        example: 28
+      empty_baskets_count:
+        type: integer
+        description: Number of empty baskets
+        example: 12
+      requests_count:
+        type: integer
+        description: Number of HTTP requests currently stored by service
+        example: 5120
+      requests_total_count:
+        type: integer
+        description: Total number of HTTP requests processed by service
+        example: 21847
+      max_basket_size:
+        type: integer
+        description: Size of the biggest basket that processed the top most number of HTTP requests
+        example: 1027
+      avg_basket_size:
+        type: integer
+        description: Average size of a basket in the system, empty baskets are not taken into account
+        example: 217
+      top_baskets_size:
+        type: array
+        description: Collection of top basket by size
+        items:
+          $ref: '#/definitions/BasketInfo'
+      top_baskets_recent:
+        type: array
+        description: Collection of top baskets recently active
+        items:
+          $ref: '#/definitions/BasketInfo'
+
+  BasketInfo:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Basket name
+        example: basket22
+      requests_count:
+        type: integer
+        description: Current number of collected HTTP requests held by basket
+        example: 62
+      requests_total_count:
+        type: integer
+        description: Total number of all HTTP requests passed through this basket
+        example: 315
+      last_request_date:
+        type: integer
+        format: int64
+        description: |
+          Date and time of last request processed through this basket in Unix time ms.
+          format (number of milliseconds elapsed since January 1, 1970 UTC).
+
+          If no requests were collected by this basket `0` is returned.
+        example: 1550106301288
+
+  Baskets:
+    type: object
+    required:
+      - names
+      - has_more
+    properties:
+      names:
+        type: array
+        description: Collection of basket names
+        items:
+          type: string
+        example:
+          - basket22
+          - mybasket
+          - test123
+      count:
+        type: integer
+        description: Total number of baskets in the system; not present if query is applied
+        example: 118
+      has_more:
+        type: boolean
+        description: Indicates if there are more baskets to fetch
+        example: true
+
+  Config:
+    type: object
+    properties:
+      forward_url:
+        type: string
+        description: URL to forward all incoming requests of the basket, `empty` value disables forwarding
+        example: https://myservice.example.com/events-collector
+      proxy_response:
+        type: boolean
+        description: |
+          If set to `true` this basket behaves as a full proxy: responses from underlying service configured in `forward_url`
+          are passed back to clients of original requests. The configuration of basket responses is ignored in this case.
+        example: false
+      insecure_tls:
+        type: boolean
+        description: |
+          If set to `true` the certificate verification will be disabled if forward URL indicates HTTPS scheme.
+          **Warning:** enabling this feature has known security implications.
+        example: false
+      expand_path:
+        type: boolean
+        description: If set to `true` the forward URL path will be expanded when original HTTP request contains compound path.
+        example: true
+      capacity:
+        type: integer
+        description: Baskets capacity, defines maximum number of requests to store
+        example: 250
+
+  Token:
+    type: object
+    required:
+      - token
+    properties:
+      token:
+        type: string
+        description: Secure token to manage the basket, generated by system
+        example: MJeIzgE1D6aze...
+
+  Requests:
+    type: object
+    required:
+      - requests
+      - has_more
+    properties:
+      requests:
+        type: array
+        description: Collection of collected requests
+        items:
+          $ref: '#/definitions/Request'
+      count:
+        type: integer
+        description: Current number of collected requests hold by basket; not present if query is applied
+        example: 200
+      total_count:
+        type: integer
+        description: Total number of all requests passed through this basket; not present if query is applied
+        example: 3023
+      has_more:
+        type: boolean
+        description: Indicates if there are more requests collected by basket to fetch
+        example: true
+
+  Request:
+    type: object
+    properties:
+      date:
+        type: integer
+        format: int64
+        description: Date and time of request in Unix time ms. format (number of milliseconds elapsed since January 1, 1970 UTC)
+        example: 1550300604712
+      headers:
+        $ref: '#/definitions/Headers'
+      content_length:
+        type: integer
+        description: Content length of request
+        example: 24
+      body:
+        type: string
+        description: Content of request body
+        example: user=abc_test&status=200
+      method:
+        type: string
+        description: HTTP method of request
+        example: POST
+      path:
+        type: string
+        description: URL path of request
+        example: /basket1/data
+      query:
+        type: string
+        description: Query parameters of request
+        example: name=basket1&version=12
+
+  Headers:
+    type: object
+    description: Map of HTTP headers, key represents name, value is array of values
+    additionalProperties:
+      type: array
+      description: Collection of header values
+      items:
+        type: string
+    example:
+      Content-Type:
+        - application/json
+      Accept:
+        - application/json
+        - application/xml
+      Connection:
+        - close
+
+  Response:
+    type: object
+    properties:
+      status:
+        type: integer
+        description: The HTTP status code to reply with
+        example: 200
+      headers:
+        $ref: '#/definitions/Headers'
+      body:
+        type: string
+        description: Content of response body
+        example: Success
+      is_template:
+        type: boolean
+        description: |
+            If set to `true` the body is treated as [HTML template](https://golang.org/pkg/html/template) that accepts
+            input from request parameters.
+        example: false

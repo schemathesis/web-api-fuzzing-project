@@ -2,9 +2,9 @@ use glob::glob;
 use rayon::prelude::*;
 use serde_json::Value;
 use std::collections::HashMap;
-use std::fs::{self, File};
+use std::fs::{create_dir, File};
 use std::io::BufReader;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -32,9 +32,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let paths: Vec<_> = glob(&pattern)
         .expect("Invalid pattern")
         .collect::<Result<Vec<_>, _>>()
-        .unwrap();
+        .expect("Error during reading directories");
 
-    let paths: Vec<(String, &PathBuf, String)> = paths.par_iter().map(load_metadata).collect();
+    let paths: Vec<(String, &Path, String)> = paths.par_iter().map(|p| load_metadata(&p)).collect();
     let mut map = HashMap::new();
     for (target, path, run_id) in &paths {
         let runs = map
@@ -53,8 +53,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn load_metadata(path: &PathBuf) -> (String, &PathBuf, String) {
-    let file = fs::File::open(path).expect("Can't read file");
+fn load_metadata(path: &Path) -> (String, &Path, String) {
+    let file = File::open(path).expect("Can't read file");
     let reader = BufReader::new(file);
     let data: Value = serde_json::from_reader(reader).expect("Can't read metadata");
     let target = data["target"]
@@ -109,7 +109,7 @@ fn make_call(
                     let run_id = tag["value"].as_str().expect("String");
                     if let Some(run_directory) = runs.get(run_id) {
                         let output_directory = run_directory.join("sentry_events");
-                        let _ = fs::create_dir(&output_directory);
+                        let _ = create_dir(&output_directory);
                         let event_id = event["id"].as_str().expect("Event ID is a string");
                         let output_path = output_directory.join(format!("{}.json", event_id));
                         let output_file = File::create(output_path).expect("Can't create a file");

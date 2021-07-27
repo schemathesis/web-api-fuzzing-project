@@ -158,6 +158,7 @@ class BaseTarget(abc.ABC, Component):
         try:
             yield self.start(extra_env=extra_env)
         except subprocess.CalledProcessError as exc:
+            self.logger.error("Subprocess exited", stdout=exc.stdout, stderr=exc.stderr)
             sys.exit(exc.returncode)
         except TargetNotReady:
             sys.exit(1)

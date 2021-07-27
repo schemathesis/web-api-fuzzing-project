@@ -77,6 +77,7 @@ def main(
                 sentry_project=cli_args.sentry_project,
                 sentry_organization=cli_args.sentry_organization,
             )
+            result.cleanup()
     store_metadata(output_dir, cli_args.fuzzer, cli_args.target, target.run_id, result.duration)
     return result.completed_process.returncode
 

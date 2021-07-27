@@ -5,7 +5,7 @@ import sys
 import tempfile
 import time
 from contextlib import contextmanager
-from shutil import copy2
+from shutil import copy2, rmtree
 from typing import Any, Dict, Generator, List, Optional, Tuple, Type, Union
 
 import attr
@@ -185,6 +185,11 @@ class FuzzResult:
             log_files=len([a for a in artifacts if a.type == ArtifactType.LOG_FILE]),
         )
         return artifacts
+
+    def cleanup(self) -> None:
+        """Clean temporary folders that are shared with the container."""
+        rmtree(self.context.input_directory)
+        rmtree(self.context.output_directory)
 
 
 Fuzzer = Type[BaseFuzzer]

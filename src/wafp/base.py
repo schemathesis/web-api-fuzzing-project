@@ -71,8 +71,12 @@ class Component(metaclass=ComponentMeta):
         return self.path.name
 
     @classproperty
+    def full_name(self) -> str:
+        return f"{self.name}:{self.__name__}"  # type: ignore
+
+    @classproperty
     def logger(self) -> structlog.BoundLogger:
-        return logger.bind(name=self.name)
+        return logger.bind(name=self.full_name)
 
     @classproperty
     def project_name(self) -> str:

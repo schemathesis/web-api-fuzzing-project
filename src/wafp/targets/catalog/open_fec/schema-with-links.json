@@ -16674,55 +16674,55 @@
               "GET /committee/{committee_id}/totals/": {
                 "operationRef": "#/paths/~1committee~1{committee_id}~1totals~1/get",
                 "parameters": {
-                  "candidate_id": "$response.body#/results/0/committee_id"
+                  "committee_id": "$response.body#/results/0/committee_id"
                 }
               },
               "GET /committee/{committee_id}/reports/": {
                 "operationRef": "#/paths/~1committee~1{committee_id}~1reports~1/get",
                 "parameters": {
-                  "candidate_id": "$response.body#/results/0/committee_id"
+                  "committee_id": "$response.body#/results/0/committee_id"
                 }
               },
               "GET /committee/{committee_id}/history/{cycle}/": {
                 "operationRef": "#/paths/~1committee~1{committee_id}~1history~1{cycle}~1/get",
                 "parameters": {
-                  "candidate_id": "$response.body#/results/0/committee_id"
+                  "committee_id": "$response.body#/results/0/committee_id"
                 }
               },
               "GET /committee/{committee_id}/history/": {
                 "operationRef": "#/paths/~1committee~1{committee_id}~1history~1/get",
                 "parameters": {
-                  "candidate_id": "$response.body#/results/0/committee_id"
+                  "committee_id": "$response.body#/results/0/committee_id"
                 }
               },
               "GET /committee/{committee_id}/filings/": {
                 "operationRef": "#/paths/~1committee~1{committee_id}~1filings~1/get",
                 "parameters": {
-                  "candidate_id": "$response.body#/results/0/committee_id"
+                  "committee_id": "$response.body#/results/0/committee_id"
                 }
               },
               "GET /committee/{committee_id}/candidates/history/{cycle}/": {
                 "operationRef": "#/paths/~1committee~1{committee_id}~1candidates~1history~1{cycle}~1/get",
                 "parameters": {
-                  "candidate_id": "$response.body#/results/0/committee_id"
+                  "committee_id": "$response.body#/results/0/committee_id"
                 }
               },
               "GET /committee/{committee_id}/candidates/history/": {
                 "operationRef": "#/paths/~1committee~1{committee_id}~1candidates~1history~1/get",
                 "parameters": {
-                  "candidate_id": "$response.body#/results/0/committee_id"
+                  "committee_id": "$response.body#/results/0/committee_id"
                 }
               },
               "GET /committee/{committee_id}/candidates/": {
                 "operationRef": "#/paths/~1committee~1{committee_id}~1candidates~1/get",
                 "parameters": {
-                  "candidate_id": "$response.body#/results/0/committee_id"
+                  "committee_id": "$response.body#/results/0/committee_id"
                 }
               },
               "GET /committee/{committee_id}/": {
                 "operationRef": "#/paths/~1committee~1{committee_id}~1/get",
                 "parameters": {
-                  "candidate_id": "$response.body#/results/0/committee_id"
+                  "committee_id": "$response.body#/results/0/committee_id"
                 }
               }
             }

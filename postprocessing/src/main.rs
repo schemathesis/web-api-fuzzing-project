@@ -2,12 +2,17 @@ mod core;
 mod error;
 mod fuzzers;
 mod output;
-use std::path::PathBuf;
+mod search;
+mod sentry;
+use std::{env, path::PathBuf};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "postprocess")]
-struct Opt {
+struct CommandOptions {
+    #[structopt(name = "COMMAND")]
+    command: String,
+
     /// Artifacts directory
     #[structopt(name = "DIRECTORY", parse(from_os_str))]
     directory: PathBuf,
@@ -25,6 +30,28 @@ struct Opt {
 }
 
 fn main() {
-    let opt = Opt::from_args();
-    core::process(&opt.directory, &opt.fuzzer, &opt.target, &opt.idx).expect("Processing error");
+    match env::args().nth(1).as_deref() {
+        Some("parse-fuzzers-output") => {
+            let options = CommandOptions::from_args();
+            core::process(
+                &options.directory,
+                &options.fuzzer,
+                &options.target,
+                &options.idx,
+            )
+            .expect("Processing error");
+        }
+        Some("parse-sentry-events") => {
+            let options = CommandOptions::from_args();
+            sentry::parse_events(
+                &options.directory,
+                &options.fuzzer,
+                &options.target,
+                &options.idx,
+            )
+            .expect("Processing error");
+        }
+        Some(command) => panic!("Unknown command: {}", command),
+        None => panic!("Missing command"),
+    }
 }

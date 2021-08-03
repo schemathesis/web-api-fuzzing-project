@@ -188,8 +188,11 @@ class FuzzResult:
 
     def cleanup(self) -> None:
         """Clean temporary folders that are shared with the container."""
-        rmtree(self.context.input_directory)
-        rmtree(self.context.output_directory)
+        try:
+            rmtree(self.context.input_directory)
+            rmtree(self.context.output_directory)
+        except OSError:
+            pass
 
 
 Fuzzer = Type[BaseFuzzer]

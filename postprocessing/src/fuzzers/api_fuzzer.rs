@@ -1,4 +1,4 @@
-use crate::output::TestCase;
+use crate::output::{ErrorKind, TestCase};
 use regex::Regex;
 use url::Url;
 
@@ -38,7 +38,7 @@ fn parse_one(block: &str) -> TestCase {
     let path = Url::parse(url).expect("A valid URL").path().to_string();
     if block.contains(CURL_ERROR) {
         // cURL error
-        TestCase::error(method, path)
+        TestCase::error(Some(method), Some(path), ErrorKind::Internal)
     } else if let Some(captures) = STATUS_CODE_RE.captures(block) {
         // Failed with an unexpected status code
         let status_code = captures

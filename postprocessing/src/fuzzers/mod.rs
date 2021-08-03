@@ -1,12 +1,16 @@
 pub mod api_fuzzer;
 pub mod cats;
+pub mod fuzz_lightyear;
+pub mod got_swag;
+pub mod restler;
+pub mod schemathesis;
+pub mod swagger_fuzzer;
+pub mod tnt_fuzzer;
 use serde::ser::{SerializeSeq, Serializer};
 
-use crate::error::ProcessingError;
+use crate::{error::ProcessingError, output::TestCase};
 use core::fmt;
-use std::fs;
-use std::path::Path;
-use std::str::FromStr;
+use std::{fs, path::Path, str::FromStr};
 
 #[derive(Debug)]
 pub enum FuzzerError {
@@ -38,6 +42,8 @@ pub enum SchemathesisKind {
     Default,
     AllChecks,
     Negative,
+    StatefulOld,
+    StatefulNew,
 }
 
 impl fmt::Display for SchemathesisKind {
@@ -46,6 +52,8 @@ impl fmt::Display for SchemathesisKind {
             SchemathesisKind::Default => f.write_str("Default"),
             SchemathesisKind::AllChecks => f.write_str("AllChecks"),
             SchemathesisKind::Negative => f.write_str("Negative"),
+            SchemathesisKind::StatefulOld => f.write_str("StatefulOld"),
+            SchemathesisKind::StatefulNew => f.write_str("StatefulNew"),
         }
     }
 }
@@ -71,6 +79,8 @@ impl FromStr for Fuzzer {
             "schemathesis:Default" => Ok(Fuzzer::Schemathesis(SchemathesisKind::Default)),
             "schemathesis:AllChecks" => Ok(Fuzzer::Schemathesis(SchemathesisKind::AllChecks)),
             "schemathesis:Negative" => Ok(Fuzzer::Schemathesis(SchemathesisKind::Negative)),
+            "schemathesis:StatefulOld" => Ok(Fuzzer::Schemathesis(SchemathesisKind::StatefulOld)),
+            "schemathesis:StatefulNew" => Ok(Fuzzer::Schemathesis(SchemathesisKind::StatefulNew)),
             "restler" => Ok(Fuzzer::Restler),
             "cats" => Ok(Fuzzer::Cats),
             "swagger_fuzzer" => Ok(Fuzzer::SwaggerFuzzer),
@@ -108,26 +118,54 @@ pub(crate) fn process(fuzzer: Fuzzer, directory: &Path) -> Result<(), Processing
     match fuzzer {
         Fuzzer::ApiFuzzer => {
             let content = read_stdout(directory)?;
-            let output_path = directory.join("cases.json");
-            let output_file = fs::File::create(output_path)?;
-            let mut ser = serde_json::Serializer::new(output_file);
-            let mut seq = ser.serialize_seq(None)?;
-            for test_case in api_fuzzer::process_stdout(&content) {
-                seq.serialize_element(&test_case)?;
+            store_cases(api_fuzzer::process_stdout(&content), directory)?;
+        }
+        Fuzzer::TntFuzzer => {
+            let content = read_stdout(directory)?;
+            store_cases(tnt_fuzzer::process_stdout(&content), directory)?;
+        }
+        Fuzzer::Schemathesis(kind) => match kind {
+            SchemathesisKind::StatefulNew => {
+                let content = read_stdout(directory)?;
+                store_cases(schemathesis::process_pytest_output(&content), directory)?;
             }
-            seq.end()?;
+            _ => {
+                store_cases(schemathesis::process_debug_output(directory), directory)?;
+            }
+        },
+        Fuzzer::Restler => {
+            store_cases(restler::process_network_log(directory), directory)?;
         }
-        Fuzzer::TntFuzzer => {}
-        Fuzzer::Schemathesis(_kind) => {}
-        Fuzzer::Restler => {}
         Fuzzer::Cats => {
-            //let content = read_stdout(directory)?;
-            //cats::process_stdout(&content);
-            cats::process_files(directory);
+            store_cases(cats::process_files(directory), directory)?;
         }
-        Fuzzer::SwaggerFuzzer => {}
-        Fuzzer::GotSwag => {}
-        Fuzzer::FuzzLightyear => {}
+        Fuzzer::SwaggerFuzzer => {
+            let content = read_stdout(directory)?;
+            store_cases(swagger_fuzzer::process_stdout(&content), directory)?;
+        }
+        Fuzzer::GotSwag => {
+            let content = read_stdout(directory)?;
+            store_cases(got_swag::process_stdout(&content), directory)?;
+        }
+        Fuzzer::FuzzLightyear => {
+            let content = read_stdout(directory)?;
+            store_cases(fuzz_lightyear::process_stdout(&content), directory)?;
+        }
     };
+    Ok(())
+}
+
+fn store_cases<'a>(
+    cases: impl Iterator<Item = TestCase<'a>>,
+    directory: &Path,
+) -> Result<(), ProcessingError> {
+    let output_path = directory.join("cases.json");
+    let output_file = fs::File::create(output_path)?;
+    let mut ser = serde_json::Serializer::new(output_file);
+    let mut seq = ser.serialize_seq(None)?;
+    for test_case in cases {
+        seq.serialize_element(&test_case)?;
+    }
+    seq.end()?;
     Ok(())
 }

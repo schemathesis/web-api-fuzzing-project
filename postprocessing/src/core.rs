@@ -1,12 +1,11 @@
-use crate::error::ProcessingError;
-use crate::fuzzers;
-use crate::search::{compile_glob, read_dir_by_glob};
+use crate::{
+    error::ProcessingError,
+    fuzzers,
+    search::{compile_glob, read_dir_by_glob},
+};
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
-use std::fs;
-use std::io::BufReader;
-use std::path::Path;
-use std::time::Instant;
+use std::{fs, io::BufReader, path::Path, time::Instant};
 
 /// Process raw artifacts.
 pub fn process(

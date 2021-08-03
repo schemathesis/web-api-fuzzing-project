@@ -1,11 +1,12 @@
 use crate::error::ProcessingError;
 use crate::fuzzers;
-use globset::Glob;
+use crate::search::{compile_glob, read_dir_by_glob};
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use std::fs;
 use std::io::BufReader;
 use std::path::Path;
+use std::time::Instant;
 
 /// Process raw artifacts.
 pub fn process(
@@ -14,41 +15,24 @@ pub fn process(
     targets: &[String],
     indices: &[String],
 ) -> Result<(), ProcessingError> {
-    // Glob pattern for collecting all items that are selected for processing
-    let pattern = format!(
-        "{}/{}-{}-{}",
-        directory
-            .to_str()
-            .ok_or_else(|| ProcessingError::InvalidDirectoryName(directory.to_path_buf()))?,
-        as_pattern(fuzzers),
-        as_pattern(targets),
-        as_pattern(indices)
-    );
-    let glob = Glob::new(&pattern)?.compile_matcher();
-
-    let paths: Vec<_> = fs::read_dir(directory)?
-        .filter_map(|entry| {
-            if let Ok(entry) = entry {
-                if glob.is_match(entry.path()) {
-                    Some(entry)
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        })
-        .collect();
+    let start = Instant::now();
+    let glob = compile_glob(directory, fuzzers, targets, indices)?;
+    let paths = read_dir_by_glob(directory, glob)?;
     let results: Vec<_> = paths
         .par_iter()
         .progress_count(paths.len() as u64)
         .map(process_entry)
         .collect();
-    for result in results {
+    for result in &results {
         if let Err(err) = result {
             eprintln!("Error: {}", err);
         }
     }
+    println!(
+        "Processed {} runs in {:.3} seconds",
+        results.len(),
+        Instant::now().duration_since(start).as_secs_f32()
+    );
     Ok(())
 }
 
@@ -56,7 +40,7 @@ pub fn process(
 struct RunMetadata {
     fuzzer: fuzzers::Fuzzer,
     target: String,
-    run_id: String,
+    run_id: Option<String>,
     duration: f32,
 }
 
@@ -84,23 +68,4 @@ fn read_metadata(path: &Path) -> Result<RunMetadata, ProcessingError> {
     let file = fs::File::open(path)?;
     let reader = BufReader::new(file);
     serde_json::from_reader(reader).map_err(ProcessingError::Json)
-}
-
-/// Convert a slice of items into a glob pattern.
-fn as_pattern(items: &[impl ToString]) -> String {
-    if items.is_empty() {
-        "*".to_string()
-    } else if items.len() == 1 {
-        items[0].to_string()
-    } else {
-        let mut pattern = '{'.to_string();
-        for (idx, item) in items.iter().enumerate() {
-            pattern.push_str(&item.to_string());
-            if idx != items.len() - 1 {
-                pattern.push(',')
-            }
-        }
-        pattern.push('}');
-        pattern
-    }
 }

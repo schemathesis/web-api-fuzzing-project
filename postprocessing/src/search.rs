@@ -5,6 +5,16 @@ use std::{
     path::Path,
 };
 
+pub(crate) fn read_runs(
+    directory: &Path,
+    fuzzers: &[fuzzers::Fuzzer],
+    targets: &[String],
+    indices: &[String],
+) -> Result<Vec<DirEntry>, ProcessingError> {
+    let glob = compile_glob(directory, fuzzers, targets, indices)?;
+    read_dir_by_glob(directory, glob)
+}
+
 pub(crate) fn read_dir_by_glob(
     directory: &Path,
     glob: GlobMatcher,

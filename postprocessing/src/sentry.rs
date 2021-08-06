@@ -1,9 +1,4 @@
-use crate::{
-    error::ProcessingError,
-    fuzzers,
-    search::{create_pattern, read_dir_by_glob},
-};
-use globset::Glob;
+use crate::{error::ProcessingError, fuzzers, search::read_runs};
 use indicatif::ParallelProgressIterator;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde_json::Value;
@@ -122,9 +117,7 @@ pub fn parse_events(
     indices: &[String],
 ) -> Result<(), ProcessingError> {
     let start = Instant::now();
-    let pattern = create_pattern(directory, fuzzers, targets, indices)?;
-    let glob = Glob::new(&pattern)?.compile_matcher();
-    let paths = read_dir_by_glob(directory, glob)?;
+    let paths = read_runs(directory, fuzzers, targets, indices)?;
     let total: usize = paths
         .par_iter()
         .progress_count(paths.len() as u64)

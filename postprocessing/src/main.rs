@@ -1,9 +1,11 @@
 mod core;
 mod error;
 mod fuzzers;
+mod metadata;
 mod output;
 mod search;
 mod sentry;
+mod targets;
 use std::{env, path::PathBuf};
 use structopt::StructOpt;
 
@@ -44,6 +46,16 @@ fn main() {
         Some("parse-sentry-events") => {
             let options = CommandOptions::from_args();
             sentry::parse_events(
+                &options.directory,
+                &options.fuzzer,
+                &options.target,
+                &options.idx,
+            )
+            .expect("Processing error");
+        }
+        Some("parse-targets-output") => {
+            let options = CommandOptions::from_args();
+            targets::process(
                 &options.directory,
                 &options.fuzzer,
                 &options.target,

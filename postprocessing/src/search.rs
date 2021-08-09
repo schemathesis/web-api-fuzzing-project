@@ -52,7 +52,7 @@ pub(crate) fn create_pattern(
     indices: &[String],
 ) -> Result<String, ProcessingError> {
     Ok(format!(
-        "{}/{}-{}-{}",
+        "{}/{}*-{}*-{}*",
         directory
             .to_str()
             .ok_or_else(|| ProcessingError::InvalidDirectoryName(directory.to_path_buf()))?,

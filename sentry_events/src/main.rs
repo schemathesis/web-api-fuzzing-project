@@ -34,7 +34,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .collect::<Result<Vec<_>, _>>()
         .expect("Error during reading directories");
 
-    let paths: Vec<(String, &Path, String)> = paths.par_iter().map(|p| load_metadata(&p)).collect();
+    println!("Loading events for {} runs", paths.len());
+
+    let paths: Vec<(String, &Path, String)> =
+        paths.par_iter().filter_map(|p| load_metadata(p)).collect();
     let mut map = HashMap::new();
     for (target, path, run_id) in &paths {
         let runs = map
@@ -53,22 +56,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn load_metadata(path: &Path) -> (String, &Path, String) {
+fn load_metadata(path: &Path) -> Option<(String, &Path, String)> {
     let file = File::open(path).expect("Can't read file");
     let reader = BufReader::new(file);
     let data: Value = serde_json::from_reader(reader).expect("Can't read metadata");
     let target = data["target"]
         .as_str()
-        .expect("`run_id` should be a string");
-    let run_id = data["run_id"]
-        .as_str()
-        .expect("`run_id` should be a string");
-    (target.to_string(), path, run_id.to_string())
+        .expect("`target` should be a string");
+    if let Some(run_id) = data["run_id"].as_str() {
+        let target = if let Some((target, _)) = target.split_once(':') {
+            target
+        } else {
+            target
+        };
+        Some((target.to_string(), path, run_id.to_string()))
+    } else {
+        None
+    }
 }
 
 fn load_events(url: &str, token: &str, target: &str, runs: &HashMap<String, PathBuf>) {
     println!("Loading: {}", target);
     let client = reqwest::blocking::Client::new();
+    let mut count = 1;
     if let (Some(mut next), true) = make_call(
         &client,
         &format!("{}api/0/projects/sentry/{}/events/?full=true", url, target),
@@ -76,8 +86,13 @@ fn load_events(url: &str, token: &str, target: &str, runs: &HashMap<String, Path
         runs,
     ) {
         while let (Some(nxt), true) = make_call(&client, &next, token, runs) {
+            println!("{} call #{}", target, count);
             next = nxt;
+            count += 1;
         }
+        println!("Finished {}!", target);
+    } else {
+        println!("Finished {}!", target);
     }
 }
 
@@ -93,6 +108,7 @@ fn make_call(
         .send()
         .expect("Valid response");
     if response.status() == 404 {
+        println!("Got 404: {}", url);
         return (None, false);
     }
     let link_header = response
@@ -112,8 +128,12 @@ fn make_call(
                         let _ = create_dir(&output_directory);
                         let event_id = event["id"].as_str().expect("Event ID is a string");
                         let output_path = output_directory.join(format!("{}.json", event_id));
-                        let output_file = File::create(output_path).expect("Can't create a file");
-                        serde_json::to_writer(&output_file, &event).expect("Can't serialize event");
+                        if !output_path.exists() {
+                            let output_file =
+                                File::create(output_path).expect("Can't create a file");
+                            serde_json::to_writer(&output_file, &event)
+                                .expect("Can't serialize event");
+                        }
                     }
                 }
             }

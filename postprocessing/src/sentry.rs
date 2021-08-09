@@ -104,8 +104,8 @@ struct SentryEvent {
     transaction: Option<String>,
     // `method` and `path` are extracted from the `entry` object with the `request` type if it is available
     // In some cases they are extracted from the stacktrace & other location
-    method: String,
-    path: String,
+    method: Option<String>,
+    path: Option<String>,
     exceptions: Vec<Vec<ExceptionValue>>,
     metadata: Metadata,
 }
@@ -140,8 +140,9 @@ fn process_run(entry: &DirEntry) -> usize {
             .collect();
         let events: Vec<_> = paths.par_iter().filter_map(process_file).collect();
         let output_path = entry.path().join("sentry_events.json");
-        let output_file = File::create(output_path).expect("Failed to create file");
+        let output_file = File::create(&output_path).expect("Failed to create file");
         serde_json::to_writer(output_file, &events).expect("Failed to serialize events");
+        println!("Serialized {} events at {:?}", events.len(), output_path);
         events.len()
     } else {
         0
@@ -153,6 +154,7 @@ fn should_be_skipped(event: &RawSentryEvent) -> bool {
     event.title.contains("code 400, message Bad request syntax")
     // Emitted by Tornado on SIGTERM
     || event.title.contains("received signal 15, stopping")
+    || event.title.contains("Received signal SIGTERM")
     // Logs from Jupyter
     || event.title.contains("To access the server, open this file in a browser:")
     // Jupyter Server specific log entry
@@ -161,86 +163,91 @@ fn should_be_skipped(event: &RawSentryEvent) -> bool {
 
 fn process_file(path: &PathBuf) -> Option<SentryEvent> {
     let file = File::open(path).expect("Can not open file");
-    let raw_event: RawSentryEvent = serde_json::from_reader(file).expect("Can not deserialize");
-    if should_be_skipped(&raw_event) {
-        return None;
-    }
-
-    let get_transaction = |tags: &[Tag]| -> Option<String> {
-        for tag in tags {
-            if tag.key == "transaction" {
-                return Some(tag.value.clone());
-            }
+    let raw_event: Result<RawSentryEvent, _> = serde_json::from_reader(file);
+    if let Ok(raw_event) = raw_event {
+        if should_be_skipped(&raw_event) {
+            return None;
         }
-        None
-    };
-    let transaction = get_transaction(&raw_event.tags);
 
-    let get_endpoint = |entries: &[Entry]| -> (String, String) {
-        for entry in entries {
-            match entry {
-                Entry::Request {
-                    data: RequestData { method, url },
-                } => {
-                    let path = Url::parse(url).expect("Invalid URL").path().to_owned();
-                    return (method.clone(), path);
+        let get_transaction = |tags: &[Tag]| -> Option<String> {
+            for tag in tags {
+                if tag.key == "transaction" {
+                    return Some(tag.value.clone());
                 }
-                Entry::Message | Entry::Breadcrumbs | Entry::Exception { .. } => continue,
             }
-        }
-        // It may be a Gunicorn-level error that is logged differently
-        if let Some((_, path)) = raw_event.message.split_once("Error handling request ") {
+            None
+        };
+        let transaction = get_transaction(&raw_event.tags);
+
+        let get_endpoint = |entries: &[Entry]| -> (Option<String>, Option<String>) {
             for entry in entries {
                 match entry {
-                    // The only place where we can get the HTTP method is local variables in one of the
-                    // stackframes
-                    Entry::Exception {
-                        data: ExceptionData { values },
+                    Entry::Request {
+                        data: RequestData { method, url },
                     } => {
-                        for ExceptionValue {
-                            stacktrace: Stacktrace { frames },
-                            ..
-                        } in values
-                        {
-                            for Frame { vars, .. } in frames {
-                                if let Some(value) = vars["environ"]["REQUEST_METHOD"].as_str() {
-                                    let method = &value[1..value.len() - 1];
-                                    return (method.to_owned(), path.to_owned());
+                        let path = Url::parse(url).expect("Invalid URL").path().to_owned();
+                        return (Some(method.clone()), Some(path));
+                    }
+                    Entry::Message | Entry::Breadcrumbs | Entry::Exception { .. } => continue,
+                }
+            }
+            // It may be a Gunicorn-level error that is logged differently
+            if let Some((_, path)) = raw_event.message.split_once("Error handling request ") {
+                for entry in entries {
+                    match entry {
+                        // The only place where we can get the HTTP method is local variables in one of the
+                        // stackframes
+                        Entry::Exception {
+                            data: ExceptionData { values },
+                        } => {
+                            for ExceptionValue {
+                                stacktrace: Stacktrace { frames },
+                                ..
+                            } in values
+                            {
+                                for Frame { vars, .. } in frames {
+                                    if let Some(value) = vars["environ"]["REQUEST_METHOD"].as_str()
+                                    {
+                                        let method = &value[1..value.len() - 1];
+                                        return (Some(method.to_owned()), Some(path.to_owned()));
+                                    }
                                 }
                             }
                         }
+                        Entry::Message | Entry::Breadcrumbs | Entry::Request { .. } => continue,
                     }
+                }
+            };
+            (None, None)
+        };
+        let (method, path) = get_endpoint(&raw_event.entries);
+
+        let exceptions = {
+            let mut out = Vec::new();
+            for entry in &raw_event.entries {
+                match entry {
+                    Entry::Exception {
+                        data: ExceptionData { values },
+                    } => out.push(values.clone()),
                     Entry::Message | Entry::Breadcrumbs | Entry::Request { .. } => continue,
                 }
             }
+            out
         };
-        panic!("Failed to find HTTP method & path in entries")
-    };
-    let (method, path) = get_endpoint(&raw_event.entries);
 
-    let exceptions = {
-        let mut out = Vec::new();
-        for entry in &raw_event.entries {
-            match entry {
-                Entry::Exception {
-                    data: ExceptionData { values },
-                } => out.push(values.clone()),
-                Entry::Message | Entry::Breadcrumbs | Entry::Request { .. } => continue,
-            }
-        }
-        out
-    };
-
-    Some(SentryEvent {
-        event_id: raw_event.event_id,
-        group_id: raw_event.group_id,
-        title: raw_event.title,
-        message: raw_event.message,
-        culprit: raw_event.culprit,
-        transaction,
-        method,
-        path,
-        exceptions,
-        metadata: raw_event.metadata,
-    })
+        Some(SentryEvent {
+            event_id: raw_event.event_id,
+            group_id: raw_event.group_id,
+            title: raw_event.title,
+            message: raw_event.message,
+            culprit: raw_event.culprit,
+            transaction,
+            method,
+            path,
+            exceptions,
+            metadata: raw_event.metadata,
+        })
+    } else {
+        panic!("Invalid file: {:?}", path);
+    }
 }

@@ -32,6 +32,18 @@ Alternatively you can run it via ``poetry``:
 poetry run wafp schemathesis:Default jupyter_server --output-dir=./artifacts
 ```
 
+If you want to run the whole suite, use the `run.py` script:
+
+```
+python run.py --output-dir=./artifacts --iterations=30
+```
+
+It will run all the defined combinations for 30 times and store the artifacts in the `./artifacts` directory.
+The combinations are defined in the `COMBINATIONS` variable in the `run.py` file. It excludes combinations that are known
+to not work for some reason (usually due to fuzzer failures). 
+
+Note, that the `run.py` file does not include the Sentry integration (see below).
+
 ## Fuzzing targets
 
 Every fuzzing target is a web application that runs via `docker-compose`. WAFP provides an API on top of
@@ -181,6 +193,18 @@ The `artifacts` variable will contain container logs and Sentry events as Python
 WAFP uses the `GET /api/0/projects/{organization_slug}/{project_slug}/events/` endpoint to retrieve events data.
 See more info in Sentry documentation - https://docs.sentry.io/api/events/list-a-projects-events/
 
+If you'd like to use the `run.py` file to run all combinations, you'll need to add `sentry_dsn` keys to the desired combinations in the `COMBINATIONS` variable in the `run.py` file.
+
+As Sentry does not process events immediately, you'll need to download them separately, when the processing is done in your Sentry instance.
+
+To load the events you need the latest stable Rust version (see the [rustup](https://rustup.rs/) docs for the installation instructions) and run the following command in the `sentry_events` directory:
+
+```
+cargo run --release <path-to-artifacts> --token <your Sentry API token> --url <your Sentry instance URL>
+```
+
+It will load all the events relevant to the artifacts and store them in the same artifacts directory. Note, it might take a while to download all the events.
+
 ## Fuzzers
 
 API fuzzers are also run via `docker-compose` and are available via a similar interface:
@@ -202,9 +226,23 @@ For example, there are four different variants for Schemathesis:
 
 Fuzzers' names are derived from Python packages they are in - you can find them in the `./src/wafp/fuzzers/catalog` directory.
 
-## Artifacts processing & data aggregation
+## Artifacts processing
 
-TODO.
+To process the artifacts you need the latest stable Rust version (see the [rustup](https://rustup.rs/) docs for the installation instruction).
+
+Run the following command in the `postprocessing` directory:
+
+```
+cargo run --release <path-to-artifacts> <output-directory>
+```
+
+The output directory will have the same top-level structure as the input one. Sub-directories named by the following pattern - `<fuzzer>-<target>-<iteration-number>`. Then, each directory may have the following files:
+
+- `metadata.json`. Metadata about a test run - tested fuzzer name, run duration, etc
+- `fuzzer.json` - Structured fuzzer output
+- `deduplicated_cases.json` - Deduplicated reported failures, when fuzzers provide it
+- `sentry.json` - Cleaned Sentry events for this run
+- `target.json` - Parsed stdout for Gitlab & Disease.sh targets that are tested without Sentry integration
 
 ## Related projects
 

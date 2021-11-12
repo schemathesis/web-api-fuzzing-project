@@ -3,7 +3,7 @@ use std::{
     collections::HashMap,
     fs::{read_to_string, File},
     io::{BufRead, BufReader},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use regex::Regex;
@@ -198,7 +198,7 @@ struct StdoutEntry<'a> {
     failures: HashMap<&'static str, u16>,
 }
 
-pub(crate) fn get_deduplicated_results(directory: &Path) {
+pub(crate) fn get_deduplicated_results(directory: &Path, out_directory: &PathBuf) {
     let path = directory.join("stdout.txt");
     let content = read_to_string(path).expect("Failed to read stdout.txt");
     if !content.contains("FAILURES") {
@@ -216,7 +216,7 @@ pub(crate) fn get_deduplicated_results(directory: &Path) {
             }
         })
         .peekable();
-    let output_path = directory.join("deduplicated_cases.json");
+    let output_path = out_directory.join("deduplicated_cases.json");
     let output_file = File::create(output_path).expect("Failed to create a file");
     let mut ser = serde_json::Serializer::new(output_file);
     let mut seq = ser.serialize_seq(None).unwrap();

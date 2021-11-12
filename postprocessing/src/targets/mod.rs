@@ -137,17 +137,18 @@ impl FromStr for Target {
 }
 
 pub fn process(
-    directory: &Path,
+    in_directory: &Path,
+    out_directory: &Path,
     fuzzers: &[fuzzers::Fuzzer],
     targets: &[String],
     indices: &[String],
 ) -> Result<(), ProcessingError> {
     let start = Instant::now();
-    let paths = read_runs(directory, fuzzers, targets, indices)?;
+    let paths = read_runs(in_directory, fuzzers, targets, indices)?;
     let results: Vec<_> = paths
         .par_iter()
         .progress_count(paths.len() as u64)
-        .map(process_run)
+        .map(|entry| process_run(entry, out_directory))
         .collect();
     for result in &results {
         if let Err(err) = result {
@@ -155,7 +156,7 @@ pub fn process(
         }
     }
     println!(
-        "Processed {} runs in {:.3} seconds",
+        "TARGETS: Processed {} runs in {:.3} seconds",
         results.len(),
         Instant::now().duration_since(start).as_secs_f32()
     );
@@ -175,7 +176,7 @@ pub(crate) struct Failure {
     traceback: String,
 }
 
-fn process_run(entry: &fs::DirEntry) -> Result<(), ProcessingError> {
+fn process_run(entry: &fs::DirEntry, out_directory: &Path) -> Result<(), ProcessingError> {
     let mut path = entry.path();
     path.push("metadata.json");
     let metadata = metadata::read_metadata(&path)?;
@@ -183,12 +184,12 @@ fn process_run(entry: &fs::DirEntry) -> Result<(), ProcessingError> {
         Target::DiseaseSh(_) => {
             let stdout = read_stdout(entry).expect("Failed to read stdout.txt");
             let failures = disease_sh::process_stdout(&stdout);
-            store_failures(entry, &failures)
+            store_failures(entry, &failures, out_directory)
         }
         Target::GitLab(_) => {
             let stdout = read_stdout(entry).expect("Failed to read stdout.txt");
             let failures = gitlab::process_stdout(&stdout);
-            store_failures(entry, &failures)
+            store_failures(entry, &failures, out_directory)
         }
         Target::AgeOfEmpires2Api(_)
         | Target::CcccatalogApi(_)
@@ -209,8 +210,11 @@ fn process_run(entry: &fs::DirEntry) -> Result<(), ProcessingError> {
     Ok(())
 }
 
-fn store_failures(entry: &fs::DirEntry, failures: &[Failure]) {
-    let output_path = entry.path().join("failures.json");
+fn store_failures(entry: &fs::DirEntry, failures: &[Failure], out_directory: &Path) {
+    let out_directory =
+        out_directory.join(entry.path().file_name().expect("Missing directory name"));
+    fs::create_dir_all(&out_directory).expect("Failed to create output directory");
+    let output_path = out_directory.join("failures.json");
     let output_file = File::create(output_path).expect("Failed to create file");
     serde_json::to_writer(output_file, failures).expect("Failed to serialize failures");
 }

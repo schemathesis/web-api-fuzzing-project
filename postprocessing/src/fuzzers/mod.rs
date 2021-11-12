@@ -10,7 +10,11 @@ use serde::ser::{SerializeSeq, Serializer};
 
 use crate::{error::ProcessingError, output::TestCase};
 use core::fmt;
-use std::{fs, path::Path, str::FromStr};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
 #[derive(Debug)]
 pub enum FuzzerError {
@@ -114,44 +118,48 @@ fn read_stdout(directory: &Path) -> std::io::Result<String> {
     std::fs::read_to_string(output_path)
 }
 
-pub(crate) fn process(fuzzer: Fuzzer, directory: &Path) -> Result<(), ProcessingError> {
+pub(crate) fn process(
+    fuzzer: Fuzzer,
+    directory: &Path,
+    out_directory: &PathBuf,
+) -> Result<(), ProcessingError> {
     match fuzzer {
         Fuzzer::ApiFuzzer => {
             let content = read_stdout(directory)?;
-            store_cases(api_fuzzer::process_stdout(&content), directory)?;
+            store_cases(api_fuzzer::process_stdout(&content), out_directory)?;
         }
         Fuzzer::TntFuzzer => {
             let content = read_stdout(directory)?;
-            store_cases(tnt_fuzzer::process_stdout(&content), directory)?;
+            store_cases(tnt_fuzzer::process_stdout(&content), out_directory)?;
         }
         Fuzzer::Schemathesis(kind) => match kind {
             SchemathesisKind::StatefulNew => {
                 let content = read_stdout(directory)?;
-                store_cases(schemathesis::process_pytest_output(&content), directory)?;
+                store_cases(schemathesis::process_pytest_output(&content), out_directory)?;
             }
             _ => {
-                schemathesis::get_deduplicated_results(directory);
-                store_cases(schemathesis::process_debug_output(directory), directory)?;
+                schemathesis::get_deduplicated_results(directory, out_directory);
+                store_cases(schemathesis::process_debug_output(directory), out_directory)?;
             }
         },
         Fuzzer::Restler => {
-            restler::get_deduplicated_results(directory);
-            store_cases(restler::process_network_log(directory), directory)?;
+            restler::get_deduplicated_results(directory, out_directory);
+            store_cases(restler::process_network_log(directory), out_directory)?;
         }
         Fuzzer::Cats => {
-            store_cases(cats::process_files(directory), directory)?;
+            store_cases(cats::process_files(directory), out_directory)?;
         }
         Fuzzer::SwaggerFuzzer => {
             let content = read_stdout(directory)?;
-            store_cases(swagger_fuzzer::process_stdout(&content), directory)?;
+            store_cases(swagger_fuzzer::process_stdout(&content), out_directory)?;
         }
         Fuzzer::GotSwag => {
             let content = read_stdout(directory)?;
-            store_cases(got_swag::process_stdout(&content), directory)?;
+            store_cases(got_swag::process_stdout(&content), out_directory)?;
         }
         Fuzzer::FuzzLightyear => {
             let content = read_stdout(directory)?;
-            store_cases(fuzz_lightyear::process_stdout(&content), directory)?;
+            store_cases(fuzz_lightyear::process_stdout(&content), out_directory)?;
         }
     };
     Ok(())
@@ -161,7 +169,7 @@ fn store_cases<'a>(
     cases: impl Iterator<Item = TestCase<'a>>,
     directory: &Path,
 ) -> Result<(), ProcessingError> {
-    let output_path = directory.join("cases.json");
+    let output_path = directory.join("fuzzer.json");
     let output_file = fs::File::create(output_path)?;
     let mut ser = serde_json::Serializer::new(output_file);
     let mut seq = ser.serialize_seq(None)?;

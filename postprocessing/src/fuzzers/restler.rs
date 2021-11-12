@@ -138,7 +138,7 @@ struct StdoutEntry<'a> {
     failures: HashMap<&'static str, u16>,
 }
 
-pub(crate) fn get_deduplicated_results(directory: &Path) {
+pub(crate) fn get_deduplicated_results(directory: &Path, out_directory: &PathBuf) {
     let error_buckets_file = directory.join("Test/ResponseBuckets/errorBuckets.json");
     let file = File::open(error_buckets_file).unwrap();
     let data: serde_json::Value = serde_json::from_reader(file).unwrap();
@@ -156,7 +156,7 @@ pub(crate) fn get_deduplicated_results(directory: &Path) {
         }
     }
     if !network_data.is_empty() {
-        let output_path = directory.join("deduplicated_cases.json");
+        let output_path = out_directory.join("deduplicated_cases.json");
         let output_file = File::create(output_path).expect("Failed to create a file");
         let mut ser = serde_json::Serializer::new(output_file);
         let mut seq = ser.serialize_seq(Some(network_data.len())).unwrap();

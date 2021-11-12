@@ -111,27 +111,28 @@ struct SentryEvent {
 }
 
 pub fn parse_events(
-    directory: &Path,
+    in_directory: &Path,
+    out_directory: &Path,
     fuzzers: &[fuzzers::Fuzzer],
     targets: &[String],
     indices: &[String],
 ) -> Result<(), ProcessingError> {
     let start = Instant::now();
-    let paths = read_runs(directory, fuzzers, targets, indices)?;
+    let paths = read_runs(in_directory, fuzzers, targets, indices)?;
     let total: usize = paths
         .par_iter()
         .progress_count(paths.len() as u64)
-        .map(process_run)
+        .map(|entry| process_run(entry, out_directory))
         .sum();
     println!(
-        "Processed {} events in {:.3} seconds",
+        "SENTRY: Processed {} events in {:.3} seconds",
         total,
         Instant::now().duration_since(start).as_secs_f32()
     );
     Ok(())
 }
 
-fn process_run(entry: &DirEntry) -> usize {
+fn process_run(entry: &DirEntry, out_directory: &Path) -> usize {
     let sentry_events_dir = entry.path().join("sentry_events");
     if sentry_events_dir.exists() {
         let paths: Vec<_> = read_dir(sentry_events_dir)
@@ -139,10 +140,11 @@ fn process_run(entry: &DirEntry) -> usize {
             .map(|e| e.expect("Invalid entry").path())
             .collect();
         let events: Vec<_> = paths.par_iter().filter_map(process_file).collect();
-        let output_path = entry.path().join("sentry_events.json");
+        let output_path = out_directory
+            .join(entry.path().file_name().expect("Missing directory name"))
+            .join("sentry.json");
         let output_file = File::create(&output_path).expect("Failed to create file");
         serde_json::to_writer(output_file, &events).expect("Failed to serialize events");
-        println!("Serialized {} events at {:?}", events.len(), output_path);
         events.len()
     } else {
         0

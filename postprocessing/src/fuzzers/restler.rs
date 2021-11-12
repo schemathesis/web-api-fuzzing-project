@@ -1,13 +1,15 @@
 use regex::Regex;
+use serde::ser::{SerializeSeq, Serializer};
 use std::{
-    fs::read_to_string,
+    collections::{HashMap, HashSet},
+    fs::{read_to_string, File},
     path::{Path, PathBuf},
 };
 
 use crate::output::TestCase;
 
 lazy_static::lazy_static! {
-    static ref TEST_CASE_RE: Regex = Regex::new(r"(?s)Sending: '\w+? .+? HTTP.+?Received: 'HTTP/[0-2].[0-9] ([0-9]{3})").expect("A valid regex");
+    static ref TEST_CASE_RE: Regex = Regex::new(r"(?s)Sending: '(\w+?) (.+?) HTTP.+?Received: 'HTTP/[0-2].[0-9] ([0-9]{3})").expect("A valid regex");
     static ref COMBINATIONS_RE: Regex = Regex::new(r"Request-[0-9]+: Value Combinations: ([0-9]+)").expect("A valid regex");
     static ref ENDPOINTS_RE: Regex = Regex::new(r"(?s)Endpoint - (.+?)\n.+?restler_static_string: '(.+?) '").expect("A valid regex");
     static ref TOTAL_RE: Regex = Regex::new(r"main_driver': ([0-9]+)").expect("A valid regex");
@@ -34,14 +36,14 @@ pub fn process_network_log(directory: &Path) -> impl Iterator<Item = TestCase<'s
         .parse::<usize>()
         .expect("Invalid number");
     let mut cases = Vec::with_capacity(total_cases);
-    let requests_data = process_main(&main_content);
-    let mut requests = requests_data.iter();
-    let (mut method, mut path) = requests.next().expect("No requests made").clone();
-    let mut is_last_endpoint = false;
     for block in content.split("Generation-1: Rendering Sequence").skip(1) {
         for case in TEST_CASE_RE.captures_iter(block) {
+            let method = case.get(1).expect("Always present").as_str().to_string();
+            let path = case.get(2).expect("Always present").as_str();
+            let p = url::Url::parse(&format!("http://example.com{}", path)).unwrap();
+            let path = p.path().to_string();
             let status_code = case
-                .get(1)
+                .get(3)
                 .expect("Always present")
                 .as_str()
                 .parse::<u16>()
@@ -55,17 +57,6 @@ pub fn process_network_log(directory: &Path) -> impl Iterator<Item = TestCase<'s
             } else {
                 // There are no other cases occured during testing, thus coercing everything else to `pass`
                 cases.push(TestCase::pass(method.clone(), path.clone()))
-            }
-        }
-        if block.contains("Remaining candidate combinations: 1)") {
-            if let Some((m, p)) = requests.next() {
-                method = m.clone();
-                path = p.clone();
-            } else if is_last_endpoint {
-                // Health-check
-                panic!("Invalid endpoints mapping");
-            } else {
-                is_last_endpoint = true
             }
         }
     }
@@ -112,4 +103,79 @@ fn process_main(content: &str) -> Vec<(String, String)> {
         out.push((method, path))
     }
     out
+}
+
+#[derive(serde::Deserialize, Hash, PartialEq, Eq, Debug)]
+struct BucketData {
+    request: RequestDataWrapper,
+    response: ResponseDataWrapper,
+}
+#[derive(serde::Deserialize, Hash, PartialEq, Eq, Debug)]
+struct RequestDataWrapper {
+    RequestData: RequestData,
+}
+#[derive(serde::Deserialize, Hash, PartialEq, Eq, Debug)]
+struct RequestData {
+    method: String,
+    path: String,
+    query: String,
+    body: String,
+}
+#[derive(serde::Deserialize, Hash, PartialEq, Eq, Debug)]
+struct ResponseDataWrapper {
+    ResponseData: ResponseData,
+}
+#[derive(serde::Deserialize, Hash, PartialEq, Eq, Debug)]
+struct ResponseData {
+    code: u16,
+    content: String,
+}
+
+#[derive(serde::Serialize)]
+struct StdoutEntry<'a> {
+    method: &'a str,
+    path: &'a str,
+    failures: HashMap<&'static str, u16>,
+}
+
+pub(crate) fn get_deduplicated_results(directory: &Path) {
+    let error_buckets_file = directory.join("Test/ResponseBuckets/errorBuckets.json");
+    let file = File::open(error_buckets_file).unwrap();
+    let data: serde_json::Value = serde_json::from_reader(file).unwrap();
+
+    let mut network_data = HashSet::new();
+    for (status_code, buckets) in data.as_object().unwrap() {
+        if status_code.starts_with('5') {
+            for array in buckets.as_object().unwrap().values() {
+                for pair in array.as_array().unwrap() {
+                    let entry: BucketData =
+                        serde_json::from_value(pair.clone()).unwrap_or_else(|_| panic!("{}", pair));
+                    network_data.insert(entry);
+                }
+            }
+        }
+    }
+    if !network_data.is_empty() {
+        let output_path = directory.join("deduplicated_cases.json");
+        let output_file = File::create(output_path).expect("Failed to create a file");
+        let mut ser = serde_json::Serializer::new(output_file);
+        let mut seq = ser.serialize_seq(Some(network_data.len())).unwrap();
+        let mut map = HashMap::with_capacity(network_data.len());
+        for entry in network_data {
+            let method = entry.request.RequestData.method;
+            let path = entry.request.RequestData.path;
+            let e = map.entry((method, path)).or_insert_with(HashMap::new);
+            let x = e.entry("server_error").or_insert(0);
+            *x += 1;
+        }
+        for ((method, path), failures) in map {
+            seq.serialize_element(&StdoutEntry {
+                method: &method,
+                path: &path,
+                failures,
+            })
+            .unwrap()
+        }
+        seq.end().unwrap();
+    }
 }

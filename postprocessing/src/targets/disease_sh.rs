@@ -70,7 +70,7 @@ fn collect_traceback(lines: &mut Lines) -> String {
         if !line.starts_with("web_1  ") {
             continue;
         }
-        let cleaned = line[41..].trim().trim_end_matches("{").trim();
+        let cleaned = line[41..].trim().trim_end_matches('{').trim();
         if !cleaned.starts_with("at ") {
             break;
         } else {

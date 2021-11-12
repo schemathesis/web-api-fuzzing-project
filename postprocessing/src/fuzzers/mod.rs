@@ -130,10 +130,12 @@ pub(crate) fn process(fuzzer: Fuzzer, directory: &Path) -> Result<(), Processing
                 store_cases(schemathesis::process_pytest_output(&content), directory)?;
             }
             _ => {
+                schemathesis::get_deduplicated_results(directory);
                 store_cases(schemathesis::process_debug_output(directory), directory)?;
             }
         },
         Fuzzer::Restler => {
+            restler::get_deduplicated_results(directory);
             store_cases(restler::process_network_log(directory), directory)?;
         }
         Fuzzer::Cats => {

@@ -18,6 +18,8 @@ pub enum FailureKind {
     ResponseHeadersConformance,
     ContentTypeConformance,
     RequestTimeout,
+    MissingContentType,
+    MalformedMediaType,
 }
 #[derive(Debug, serde::Serialize)]
 #[serde(rename_all = "snake_case", tag = "type")]
@@ -139,6 +141,30 @@ impl<'a> TestCase<'a> {
             Some(path),
             TestCaseResult::Failure {
                 kind: FailureKind::ContentTypeConformance,
+            },
+        )
+    }
+    pub fn malformed_media_type(
+        method: impl Into<Cow<'a, str>>,
+        path: impl Into<Cow<'a, str>>,
+    ) -> TestCase<'a> {
+        TestCase::new(
+            Some(method),
+            Some(path),
+            TestCaseResult::Failure {
+                kind: FailureKind::MalformedMediaType,
+            },
+        )
+    }
+    pub fn missing_content_type(
+        method: impl Into<Cow<'a, str>>,
+        path: impl Into<Cow<'a, str>>,
+    ) -> TestCase<'a> {
+        TestCase::new(
+            Some(method),
+            Some(path),
+            TestCaseResult::Failure {
+                kind: FailureKind::MissingContentType,
             },
         )
     }

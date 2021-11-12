@@ -1,9 +1,10 @@
+use serde::ser::{SerializeSeq, Serializer};
 use std::{
-    fs::File,
+    collections::HashMap,
+    fs::{read_to_string, File},
     io::{BufRead, BufReader},
     path::Path,
 };
-use url::Url;
 
 use regex::Regex;
 
@@ -59,6 +60,7 @@ pub(crate) struct SerializedCheck {
     /// Check result.
     value: Status,
     response: Option<Response>,
+    context: Option<serde_json::Value>,
 }
 
 #[derive(serde::Deserialize, Debug)]
@@ -91,9 +93,14 @@ fn parse_event(event: serde_json::Value) -> impl Iterator<Item = TestCase<'stati
                     .expect("Response should be present")
                     .status_code,
             ),
-            (Status::Failure, "content_type_conformance") => {
-                TestCase::content_type_conformance(method, path)
-            }
+            (Status::Failure, "content_type_conformance") => match check.context {
+                Some(context) => match context["type"].as_str() {
+                    Some("malformed_media_type") => TestCase::malformed_media_type(method, path),
+                    Some("missing_content_type") => TestCase::missing_content_type(method, path),
+                    _ => TestCase::content_type_conformance(method, path),
+                },
+                None => TestCase::content_type_conformance(method, path),
+            },
             (Status::Failure, "response_headers_conformance") => {
                 TestCase::response_headers_conformance(method, path)
             }
@@ -109,7 +116,13 @@ fn parse_event(event: serde_json::Value) -> impl Iterator<Item = TestCase<'stati
 
 lazy_static::lazy_static! {
     static ref TEST_CASE_RE: Regex = Regex::new(r"(?s)[0-9]+?\. (.+?): .+  requests\.(\w+)\('(.+?)'").expect("Valid regex");
+    static ref TEST_CASE2_RE: Regex = Regex::new(r"state.schema\['(.+?)'\]\['(.+?)'\]").expect("Valid regex");
     static ref ERROR_RE: Regex = Regex::new(r"_step\(case=state\.schema\['(.+?)'\]\['(\w+?)']").expect("Valid regex");
+    static ref STDOUT_FAILURE_RE: Regex = Regex::new(r"^[0-9]+\. ").expect("Valid regex");
+    static ref SERVER_ERROR_RE: Regex = Regex::new(r"Received a response with 5xx status code: ([0-9]+)").expect("Valid regex");
+    static ref UNEXPECTED_STATUS_CODE: Regex = Regex::new(r"Received a response with a status code, which is not defined in the schema: ([0-9]+)").expect("Valid regex");
+    static ref UNEXPECTED_CONTENT_TYPE: Regex = Regex::new(r"Received a response with '(.+?)' Content-Type, but it is not declared in the schema.").expect("Valid regex");
+
 }
 
 pub fn process_pytest_output(content: &str) -> impl Iterator<Item = TestCase> {
@@ -154,20 +167,18 @@ fn parse_case(case: &str) -> TestCase {
         let path: Option<std::borrow::Cow<'_, str>> = None;
         TestCase::error(method, path, ErrorKind::Unsatisfiable)
     } else {
-        if TEST_CASE_RE.captures(case).is_none() {
-            println!("Case: {}", case);
-        }
         let capture = TEST_CASE_RE.captures(case).expect("Always matches");
+        let capture2 = TEST_CASE2_RE
+            .captures_iter(case)
+            .last()
+            .expect("Always matches");
         let error = capture.get(1).expect("Always present");
-        let method = capture
+        let method = capture2
             .get(2)
             .expect("Always present")
             .as_str()
             .to_ascii_uppercase();
-        let path = Url::parse(capture.get(3).expect("Always present").as_str())
-            .expect("Invalid URL")
-            .path()
-            .to_owned();
+        let path = capture2.get(1).expect("Always present").as_str().to_owned();
         match error.as_str() {
             "Received a response with 5xx status code" => {
                 let status_code = case[error.end() + 2..error.end() + 5]
@@ -178,4 +189,83 @@ fn parse_case(case: &str) -> TestCase {
             _ => panic!("Unknown test case"),
         }
     }
+}
+
+#[derive(serde::Serialize)]
+struct StdoutEntry<'a> {
+    method: &'a str,
+    path: &'a str,
+    failures: HashMap<&'static str, u16>,
+}
+
+pub(crate) fn get_deduplicated_results(directory: &Path) {
+    let path = directory.join("stdout.txt");
+    let content = read_to_string(path).expect("Failed to read stdout.txt");
+    if !content.contains("FAILURES") {
+        return;
+    }
+    let mut lines = content
+        .lines()
+        .filter_map(|l| {
+            let trimmed = l.trim();
+            if trimmed.ends_with("[P]") || trimmed.ends_with("[N]") || STDOUT_FAILURE_RE.is_match(l)
+            {
+                Some(trimmed)
+            } else {
+                None
+            }
+        })
+        .peekable();
+    let output_path = directory.join("deduplicated_cases.json");
+    let output_file = File::create(output_path).expect("Failed to create a file");
+    let mut ser = serde_json::Serializer::new(output_file);
+    let mut seq = ser.serialize_seq(None).unwrap();
+    while let Some(line) = lines.next() {
+        if line.ends_with("[P]") || line.ends_with("[N]") {
+            // New endpoint
+            let mut parts = line.split_ascii_whitespace();
+            let method = parts.next().unwrap();
+            let path = parts.next().unwrap();
+            while let Some(true) = lines.peek().map(|l| STDOUT_FAILURE_RE.is_match(l)) {
+                if let Some(next) = lines.peek() {
+                    if let Some(captures) = SERVER_ERROR_RE.captures(next) {
+                        let status_code = captures.get(1).unwrap().as_str().parse::<u16>().unwrap();
+                        seq.serialize_element(&TestCase::server_error(method, path, status_code))
+                            .unwrap();
+                    } else if next.contains("Response timed out after") {
+                        seq.serialize_element(&TestCase::request_timeout(method, path))
+                            .unwrap();
+                    } else if next
+                        .contains("The received response does not conform to the defined schema")
+                    {
+                        seq.serialize_element(&TestCase::response_conformance(method, path))
+                            .unwrap();
+                    } else if let Some(captures) = UNEXPECTED_STATUS_CODE.captures(next) {
+                        let status_code = captures.get(1).unwrap().as_str().parse::<u16>().unwrap();
+                        seq.serialize_element(&TestCase::unexpected_status_code(
+                            method,
+                            path,
+                            status_code,
+                        ))
+                        .unwrap();
+                    } else if UNEXPECTED_CONTENT_TYPE.captures(next).is_some() {
+                        seq.serialize_element(&TestCase::content_type_conformance(method, path))
+                            .unwrap();
+                    } else if next.contains("Response is missing the `Content-Type` header") {
+                        seq.serialize_element(&TestCase::missing_content_type(method, path))
+                            .unwrap();
+                    } else if next.contains("Malformed media type") {
+                        seq.serialize_element(&TestCase::malformed_media_type(method, path))
+                            .unwrap();
+                    } else {
+                        panic!("Unknown failure: {}", next)
+                    }
+                }
+                lines.next();
+            }
+        } else {
+            unreachable!("Should not happen")
+        }
+    }
+    SerializeSeq::end(seq).unwrap();
 }

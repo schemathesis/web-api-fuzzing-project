@@ -1,0 +1,11 @@
+version: '3'
+services:
+  web:
+    image: gitlab/gitlab-ce:12.6.3-ce.0
+    init: true
+    environment:
+      - PORT=3000
+      - SENTRY_ENABLED=true
+      - SENTRY_DSN
+    ports:
+      - '${PORT-3000}:80'

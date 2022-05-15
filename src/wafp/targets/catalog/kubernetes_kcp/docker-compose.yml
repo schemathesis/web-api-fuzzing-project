@@ -1,0 +1,14 @@
+version: '3'
+services:
+  kcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - UID=${UID-1000}
+      - GID=${GID-1000}
+    user: "${UID-1000}:${GID-1000}"
+    volumes:
+      - ./kcp_data:/data:Z
+    ports:
+      - '6443:6443' # kube apiserver default port

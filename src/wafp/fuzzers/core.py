@@ -74,6 +74,7 @@ class BaseFuzzer(abc.ABC, Component):
         schema: str,
         base_url: str,
         headers: Optional[Dict[str, str]] = None,
+        ssl_insecure: bool = False,
         build: bool = False,
         target: Optional[str] = None,
     ) -> "FuzzResult":
@@ -90,7 +91,7 @@ class BaseFuzzer(abc.ABC, Component):
         start = time.perf_counter()
         completed_process = self.compose.run(
             service=self.get_fuzzer_service_name(),
-            args=self.get_entrypoint_args(context, schema_location, base_url, headers),
+            args=self.get_entrypoint_args(context, schema_location, base_url, headers, ssl_insecure),
             entrypoint=self.get_entrypoint(),
             volumes=self.get_volumes(context),
         )
@@ -104,6 +105,7 @@ class BaseFuzzer(abc.ABC, Component):
         schema: str,
         base_url: str,
         headers: Optional[Dict[str, str]] = None,
+        ssl_insecure: bool = False,
         build: bool = False,
         target: Optional[str] = None,
     ) -> Generator["FuzzResult", None, None]:
@@ -112,7 +114,13 @@ class BaseFuzzer(abc.ABC, Component):
         It is a common workflow for CLI.
         """
         try:
-            yield self.start(schema, base_url, headers, build, target)
+            yield self.start(
+                schema,
+                base_url,
+                headers,
+                ssl_insecure,
+                build,
+            )
         except subprocess.CalledProcessError as exc:
             sys.exit(exc.returncode)
         finally:
@@ -130,7 +138,12 @@ class BaseFuzzer(abc.ABC, Component):
 
     @abc.abstractmethod
     def get_entrypoint_args(
-        self, context: "FuzzerContext", schema: str, base_url: str, headers: Dict[str, str]
+        self,
+        context: "FuzzerContext",
+        schema: str,
+        base_url: str,
+        headers: Dict[str, str],
+        ssl_insecure: bool = False,
     ) -> List[str]:
         """Arguments to fuzzer's entrypoint in `docker-compose run <service> <args>`."""
         raise NotImplementedError

@@ -8,8 +8,16 @@ from wafp.utils import is_url
 
 class Default(BaseFuzzer):
     def get_entrypoint_args(
-        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str]
+        self,
+        context: FuzzerContext,
+        schema: str,
+        base_url: str,
+        headers: Dict[str, str],
+        ssl_insecure: bool = False,
     ) -> List[str]:
+        if ssl_insecure:
+            self.logger.warning("Explicit cert verification skip is not supported for this fuzzer yet")
+
         args = ["--basic_output=True"]
         if is_url(schema):
             args.append(f"--src_url={schema}")

@@ -26,6 +26,7 @@ def generate_run_id() -> str:
 class BaseTarget(abc.ABC, Component):
     port: int = attr.ib(factory=unused_port)
     force_build: bool = attr.ib(default=False)
+    fuzzer_skip_ssl_verify: bool = attr.ib(default=False)
     sentry_dsn: Optional[str] = attr.ib(default=None)
     run_id: str = attr.ib(factory=generate_run_id)
     wait_target_ready_timeout: int = WAIT_TARGET_READY_TIMEOUT
@@ -64,7 +65,12 @@ class BaseTarget(abc.ABC, Component):
         if headers:
             info["headers"] = headers
         self.logger.msg("Target is ready", **info)
-        return TargetContext(base_url=base_url, schema_location=self.get_schema_location(), headers=headers)
+        return TargetContext(
+            base_url=base_url,
+            schema_location=self.get_schema_location(),
+            headers=headers,
+            fuzzer_skip_ssl_verify=self.fuzzer_skip_ssl_verify,
+        )
 
     # These methods are expected to be overridden
 
@@ -173,6 +179,7 @@ class TargetContext:
     base_url: str = attr.ib()
     schema_location: str = attr.ib()
     headers: Dict[str, str] = attr.ib()
+    fuzzer_skip_ssl_verify: bool = attr.ib(default=False)
 
 
 Target = Type[BaseTarget]

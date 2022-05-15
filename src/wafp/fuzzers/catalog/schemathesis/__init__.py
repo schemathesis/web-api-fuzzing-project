@@ -7,7 +7,7 @@ from wafp.utils import NotSet
 
 class Default(BaseFuzzer):
     def get_entrypoint_args(
-        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str]
+        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str], ssl_insecure: bool = False
     ) -> List[str]:
         args = [
             "run",
@@ -22,6 +22,8 @@ class Default(BaseFuzzer):
         if headers:
             for key, value in headers.items():
                 args.extend(["-H", f"{key}: {value}"])
+        if ssl_insecure:
+            args.extend(["--request-tls-verify=false"])
         extend_entrypoint_args(context, args)
         return args
 
@@ -36,27 +38,27 @@ def extend_entrypoint_args(context: FuzzerContext, args: List[str]) -> None:
 
 class AllChecks(Default):
     def get_entrypoint_args(
-        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str]
+        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str], ssl_insecure: bool = False
     ) -> List[str]:
-        args = super().get_entrypoint_args(context, schema, base_url, headers)
+        args = super().get_entrypoint_args(context, schema, base_url, headers, ssl_insecure)
         args.append("--checks=all")
         return args
 
 
 class Negative(Default):
     def get_entrypoint_args(
-        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str]
+        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str], ssl_insecure: bool = False
     ) -> List[str]:
-        args = super().get_entrypoint_args(context, schema, base_url, headers)
+        args = super().get_entrypoint_args(context, schema, base_url, headers, ssl_insecure)
         args.append("--data-generation-method=negative")
         return args
 
 
 class StatefulOld(Default):
     def get_entrypoint_args(
-        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str]
+        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str], ssl_insecure: bool = False
     ) -> List[str]:
-        args = super().get_entrypoint_args(context, schema, base_url, headers)
+        args = super().get_entrypoint_args(context, schema, base_url, headers, ssl_insecure)
         args.append("--stateful=links")
         return args
 
@@ -66,8 +68,11 @@ class StatefulNew(BaseFuzzer):
         return "pytest"
 
     def get_entrypoint_args(
-        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str]
+        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str], ssl_insecure: bool = False
     ) -> List[str]:
+        if ssl_insecure:
+            self.logger.warning("Explicit cert verification skip is not supported for this target yet")
+
         filename = "test_stateful.py"
         if context.target is not None and context.target.startswith("age_of_empires_2_api"):
             extra = {"force_schema_version": "30"}

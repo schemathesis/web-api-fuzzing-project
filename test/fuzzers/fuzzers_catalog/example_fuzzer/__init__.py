@@ -5,7 +5,12 @@ from wafp.fuzzers import BaseFuzzer, FuzzerContext
 
 class Default(BaseFuzzer):
     def get_entrypoint_args(
-        self, context: FuzzerContext, schema: str, base_url: str, headers: Optional[Dict[str, str]]
+        self,
+        context: FuzzerContext,
+        schema: str,
+        base_url: str,
+        headers: Optional[Dict[str, str]],
+        ssl_insecure: bool = False,
     ) -> List[str]:
         args = [schema]
         if headers is not None:

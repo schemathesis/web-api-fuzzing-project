@@ -14,8 +14,16 @@ class Default(BaseFuzzer):
         return self.serve_spec(context, schema)
 
     def get_entrypoint_args(
-        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str]
+        self,
+        context: FuzzerContext,
+        schema: str,
+        base_url: str,
+        headers: Dict[str, str],
+        ssl_insecure: bool = False,
     ) -> List[str]:
+        if ssl_insecure:
+            self.logger.warning("Explicit cert verification skip is not supported for this fuzzer yet")
+
         parsed = urlparse(base_url)
         args = [
             f"--url={schema}",

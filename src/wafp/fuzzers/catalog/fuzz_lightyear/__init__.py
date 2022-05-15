@@ -7,8 +7,16 @@ from wafp.utils import is_url
 
 class Default(BaseFuzzer):
     def get_entrypoint_args(
-        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str]
+        self,
+        context: FuzzerContext,
+        schema: str,
+        base_url: str,
+        headers: Dict[str, str],
+        ssl_insecure: bool = False,
     ) -> List[str]:
+        if ssl_insecure:
+            self.logger.warning("Explicit cert verification skip is not supported for this fuzzer yet")
+
         if not is_url(schema):
             # The `url` argument is ignored if we pass the `--schema` option
             args = [f"--schema={schema}", "http://0.0.0.0/any.yaml"]

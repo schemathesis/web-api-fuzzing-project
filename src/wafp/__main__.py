@@ -18,6 +18,7 @@ class CliArguments(targets.cli.SharedCliArguments, fuzzers.cli.SharedCliArgument
 
     build: bool
     output_dir: str
+    fuzzer_skip_ssl_verify: bool
 
     @classmethod
     def from_all_args(
@@ -38,6 +39,13 @@ class CliArguments(targets.cli.SharedCliArguments, fuzzers.cli.SharedCliArgument
     def extend_parser(cls, parser: argparse.ArgumentParser, *, catalog: Optional[str] = None) -> None:
         parser.add_argument(
             "--build", action="store_true", required=False, default=False, help="Force building docker images"
+        )
+        parser.add_argument(
+            "--fuzzer-skip-ssl-verify",
+            action="store_true",
+            required=False,
+            default=False,
+            help="Tells fuzzer to skip certificates verification in case of https",
         )
         parser.add_argument(
             "--output-dir",
@@ -65,6 +73,7 @@ def main(
             schema=context.schema_location,
             base_url=context.base_url,
             headers=context.headers,
+            ssl_insecure=cli_args.fuzzer_skip_ssl_verify or context.fuzzer_skip_ssl_verify,
             build=cli_args.build,
             target=cli_args.target,
         ) as result:

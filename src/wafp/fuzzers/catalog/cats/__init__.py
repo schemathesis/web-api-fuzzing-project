@@ -25,8 +25,16 @@ class Default(BaseFuzzer):
         return pathlib.Path("/app/test-report/")
 
     def get_entrypoint_args(
-        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str]
+        self,
+        context: FuzzerContext,
+        schema: str,
+        base_url: str,
+        headers: Dict[str, str],
+        ssl_insecure: bool = False,
     ) -> List[str]:
+        if ssl_insecure:
+            self.logger.warning("Explicit cert verification skip is not supported for this fuzzer yet")
+
         args = [f"--contract={schema}", f"--server={base_url}"]
         if headers:
             # Over-simplified YAML serialization only for this exact case

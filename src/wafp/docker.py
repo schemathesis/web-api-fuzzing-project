@@ -1,5 +1,5 @@
 import subprocess
-from typing import Any, List
+from typing import Any, List, Union
 
 from packaging import version
 
@@ -47,7 +47,7 @@ def docker(command: List[str]) -> bytes:
     )
 
 
-def get_docker_version() -> version.Version:
+def get_docker_version() -> Union[version.LegacyVersion, version.Version]:
     """Get the installed Docker version info."""
     output = subprocess.check_output(
         ["docker", "version", "--format", "{{json .Client.Version }}"],
@@ -56,7 +56,7 @@ def get_docker_version() -> version.Version:
     return version.parse(output.strip(b'"').decode("utf8"))
 
 
-def get_compose_version() -> version.Version:
+def get_compose_version() -> Union[version.LegacyVersion, version.Version]:
     """Get the installed Docker-compose version info."""
     output = subprocess.check_output(
         ["docker-compose", "version", "--short"],

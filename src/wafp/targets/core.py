@@ -38,6 +38,7 @@ class BaseTarget(abc.ABC, Component):
         """
         self.logger.msg("Start target")
         start = time.perf_counter()
+        self.before_start()
         deadline = time.time() + self.wait_target_ready_timeout
         self.compose.up(timeout=self.wait_target_ready_timeout, build=self.force_build, extra_env=extra_env)
         base_url = self.get_base_url()
@@ -110,6 +111,12 @@ class BaseTarget(abc.ABC, Component):
         """Additional actions after the target is ready.
 
         E.g. create a user, login, etc.
+        """
+
+    def before_start(self) -> None:
+        """Additional actions before the target is started.
+
+        E.g. cleanup from previous runs.
         """
 
     def process_artifacts(

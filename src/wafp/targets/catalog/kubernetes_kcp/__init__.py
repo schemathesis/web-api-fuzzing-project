@@ -1,4 +1,5 @@
 import os
+import shutil
 from functools import cached_property
 from pathlib import Path
 from typing import Dict
@@ -60,6 +61,10 @@ class Default(BaseTarget):
             validation_from_schema=True,
             specification=Specification(name=SpecificationType.OPENAPI, version="2.0"),
         )
+
+    def before_start(self) -> None:
+        # TODO add logging if smth goes wrong
+        shutil.rmtree(KCP_DATA_PATH, ignore_errors=True)
 
     def after_start(self, stdout: bytes, headers: Dict[str, str]) -> None:
         headers["Authorization"] = f"Bearer {self.auth_token}"

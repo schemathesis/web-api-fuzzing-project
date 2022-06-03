@@ -45,7 +45,6 @@ class Default(BaseTarget):
             "UID": f"{os.getuid()}",
             "GID": f"{os.getgid()}"
         })
-        print(env)
         return env
 
     def is_ready(self, line: bytes) -> bool:

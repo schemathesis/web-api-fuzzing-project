@@ -54,6 +54,15 @@ class Negative(Default):
         return args
 
 
+class Fast(Default):
+    def get_entrypoint_args(
+        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str], ssl_insecure: bool = False
+    ) -> List[str]:
+        args = super().get_entrypoint_args(context, schema, base_url, headers, ssl_insecure)
+        args.append("--hypothesis-max-examples=10")
+        return args
+
+
 class StatefulOld(Default):
     def get_entrypoint_args(
         self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str], ssl_insecure: bool = False

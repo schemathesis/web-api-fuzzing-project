@@ -40,16 +40,13 @@ class Default(BaseTarget):
     def get_schema_location(self) -> str:
         return f"{self.get_base_url()}/openapi/v2"
 
-    def get_environment_variables(self):
+    def get_environment_variables(self) -> Dict[str, str]:
         env = super().get_environment_variables()
-        env.update({
-            "UID": f"{os.getuid()}",
-            "GID": f"{os.getgid()}"
-        })
+        env.update({"UID": f"{os.getuid()}", "GID": f"{os.getgid()}"})
         return env
 
     def is_ready(self, line: bytes) -> bool:
-        return b"Reconciling namespace root|default" in line
+        return b"Bootstrapped Namespace root|default" in line
 
     def get_metadata(self) -> Metadata:
         return Metadata(

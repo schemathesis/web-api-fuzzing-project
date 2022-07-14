@@ -19,9 +19,7 @@ WORKDIR /workspace
 
 
 # Replace copy from upstream dockerfile to just an in-place clone
-RUN git clone https://github.com/kcp-dev/kcp.git .
-# checkaut latest commit on 3.6.2022
-RUN git checkout 340946a62487f1c29bef5e443abf98a49658f54d
+RUN git clone --depth 1 https://github.com/kcp-dev/kcp.git .
 
 RUN go mod download
 
@@ -38,9 +36,9 @@ ENV GID $GID
 
 WORKDIR /
 COPY --from=builder workspace/bin/kcp-front-proxy workspace/bin/kcp workspace/bin/virtual-workspaces /
-RUN mkdir -p /data && \
-    chown $UID:$GID /data
 USER $UID:$UID
+RUN mkdir -p /data && \
+    chown $UID:0 /data
 WORKDIR /data
 VOLUME /data
 ENTRYPOINT ["/kcp"]

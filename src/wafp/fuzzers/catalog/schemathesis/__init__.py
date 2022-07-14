@@ -1,3 +1,4 @@
+import os
 from textwrap import dedent
 from typing import Dict, List, Union
 
@@ -6,6 +7,14 @@ from wafp.utils import NotSet
 
 
 class Default(BaseFuzzer):
+    @property
+    def send_report_requested(self) -> bool:
+        return bool(os.environ.get("SCHEMATHESIS_REPORT", False))
+
+    @property
+    def saas_token(self) -> str:
+        return os.environ.get("SCHEMATHESIS_TOKEN", "")
+
     def get_entrypoint_args(
         self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str], ssl_insecure: bool = False
     ) -> List[str]:
@@ -24,6 +33,10 @@ class Default(BaseFuzzer):
                 args.extend(["-H", f"{key}: {value}"])
         if ssl_insecure:
             args.extend(["--request-tls-verify=false"])
+        if self.send_report_requested and self.saas_token:
+            self.logger.info("Report gonna be sent to schemathesis.io")
+            args.extend(["--report"])
+            args.extend([f"--schemathesis-io-token={self.saas_token}"])
         extend_entrypoint_args(context, args)
         return args
 

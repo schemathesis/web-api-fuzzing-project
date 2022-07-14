@@ -1,6 +1,6 @@
 version: '3'
 services:
   fuzzer:
-    image: schemathesis/schemathesis:stable
+    build: https://github.com/schemathesis/schemathesis.git#master
     init: true
     network_mode: host

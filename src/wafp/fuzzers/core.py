@@ -33,8 +33,10 @@ class BaseFuzzer(abc.ABC, Component):
         tempdir = pathlib.Path(tempfile.mkdtemp(prefix=prefix))
         input_directory = tempdir / "input"
         input_directory.mkdir()
+        input_directory.chmod(0o777)
         output_directory = tempdir / "output"
         output_directory.mkdir()
+        output_directory.chmod(0o777)
         return input_directory, output_directory
 
     def get_fuzzer_context(self, target: Optional[str] = None) -> "FuzzerContext":
@@ -53,9 +55,9 @@ class BaseFuzzer(abc.ABC, Component):
         container_output = self.get_container_output_directory()
         return [
             # Everything that is consumed by the container
-            f"{context.input_directory}:{container_input}",
+            f"{context.input_directory}:{container_input}:Z",
             # All output of the container
-            f"{context.output_directory}:{container_output}",
+            f"{context.output_directory}:{container_output}:Z",
         ]
 
     def prepare_schema(self, context: "FuzzerContext", schema: str) -> str:

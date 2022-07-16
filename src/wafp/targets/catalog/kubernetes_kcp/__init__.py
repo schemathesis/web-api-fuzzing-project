@@ -2,7 +2,7 @@ import os
 import shutil
 from functools import cached_property
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict
 
 import attr
 import yaml
@@ -20,6 +20,7 @@ from wafp.targets import (
 
 KUBECONFIG_FILENAME = "admin.kubeconfig"
 KCP_DATA_PATH = Path(__file__).parent.absolute() / "kcp_data" / ".kcp"
+ROOT_CLUSTER_ADMIN_USERNAME = "admin"
 
 
 @attr.s
@@ -70,7 +71,10 @@ class Default(BaseTarget):
     def auth_token(self) -> str:
         with open(KCP_DATA_PATH / KUBECONFIG_FILENAME, "r") as fd:
             kubeconfig = fd.read()
-        kubeconfig = yaml.safe_load(kubeconfig)
         # TODO look up for kubeconfig type
-        token: str = kubeconfig["users"][0]["user"]["token"]  # type: ignore
-        return token
+        return self._get_user_token_from_kubeconfig(yaml.safe_load(kubeconfig), ROOT_CLUSTER_ADMIN_USERNAME)
+
+    @staticmethod
+    def _get_user_token_from_kubeconfig(kubeconfig: Dict[Any, Any], user_name: str) -> str:
+        user = next(filter(lambda x: x.get("name") == user_name, kubeconfig["users"]))
+        return str(user.get("user", {}).get("token", ""))

@@ -1,9 +1,7 @@
 version: '3'
 services:
   kcp:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/kcp-dev/kcp:latest
     environment:
       - UID=${UID-1000}
       - GID=${GID-1000}

@@ -2,8 +2,8 @@ from contextlib import suppress
 from time import sleep
 from typing import List, Optional
 
-from ..docker import ensure_docker_version
-from .cli import CliArguments
+from wafp.docker import ensure_docker_version
+from wafp.targets.cli import CliArguments
 
 
 def main(args: Optional[List[str]] = None, *, catalog: Optional[str] = None) -> int:

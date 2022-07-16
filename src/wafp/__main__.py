@@ -5,8 +5,8 @@ import sys
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from . import fuzzers, targets
-from .docker import ensure_docker_version
+from wafp import fuzzers, targets
+from wafp.docker import ensure_docker_version
 
 
 @dataclass

@@ -4,3 +4,5 @@ services:
     image: schemathesis/schemathesis:stable
     init: true
     network_mode: host
+    environment:
+      - SCHEMATHESIS_API_NAME

@@ -48,6 +48,7 @@ class Default(BaseFuzzer):
     def get_environment_variables(self) -> Dict[str, str]:
         env = super().get_environment_variables()
         if self.api_name is not None:
+            # This is a bit more convenient, as `API_NAME` is an optional positional argument to Schemathesis
             env["SCHEMATHESIS_API_NAME"] = self.api_name
         return env
 

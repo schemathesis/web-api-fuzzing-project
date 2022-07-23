@@ -2,11 +2,13 @@ FROM python:3.8-slim
 
 LABEL name="restler-demo"
 
+COPY requirements.txt frozen-requirements.txt
 RUN apt-get update \
     && groupadd test \
     && useradd --gid test --create-home --home-dir /home/test test \
     && apt-get install -y git \
     && git clone https://github.com/microsoft/restler-fuzzer.git /app \
+    && pip install --no-cache-dir -r frozen-requirements.txt \
     && cd /app \
     && chown test -R /app \
     && git checkout ad867673db70c6f39807a57314a89e86e2346ece \
@@ -16,11 +18,6 @@ RUN apt-get update \
 
 WORKDIR /app/demo_server
 
-RUN pip install -r requirements.txt
-RUN pip install 'SQLAlchemy<1.4'
-
-# Sentry integration
-RUN pip install --upgrade 'sentry-sdk[flask]'
 ENV SENTRY_DSN $SENTRY_DSN
 ENV WAFP_RUN_ID $WAFP_RUN_ID
 ENV WAFP_FUZZER_ID $WAFP_FUZZER_ID

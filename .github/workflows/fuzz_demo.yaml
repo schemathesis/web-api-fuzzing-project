@@ -25,13 +25,12 @@ jobs:
 
       - name: Run wafp
         env:
-          SCHEMATHESIS_REPORT: 1
-          SCHEMATHESIS_TOKEN: ${{ secrets.SCHEMATHESIS_TOKEN_KCP }}
+          SCHEMATHESIS_REPORT: 'true'
+          SCHEMATHESIS_TOKEN: ${{ secrets.SCHEMATHESIS_TOKEN }}
         run: poetry run wafp schemathesis:Fast kubernetes_kcp --output-dir=./artifacts
 
       - name: Archive artifacts
         uses: actions/upload-artifact@v3
-        if: ${{ always() }}
         with:
           name: artifacts
           path: artifacts

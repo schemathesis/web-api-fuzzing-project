@@ -35,8 +35,7 @@ class Default(BaseFuzzer):
             args.extend(["--request-tls-verify=false"])
         if self.send_report_requested and self.saas_token:
             self.logger.info("Report gonna be sent to schemathesis.io")
-            args.extend(["--report"])
-            args.extend([f"--schemathesis-io-token={self.saas_token}"])
+            args.extend(["--report", f"--schemathesis-io-token={self.saas_token}"])
         extend_entrypoint_args(context, args)
         return args
 

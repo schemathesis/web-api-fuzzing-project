@@ -2,11 +2,9 @@ FROM jupyterhub/jupyterhub:1.4.dev
 
 RUN jupyterhub --generate-config
 
-RUN pip install --upgrade notebook
-RUN pip install tornado==6.1.0
+COPY requirements.txt frozen-requirements.txt
+RUN pip install --no-cache-dir -r frozen-requirements.txt
 
-# Sentry integration
-RUN pip install --upgrade 'sentry-sdk'
 ENV SENTRY_DSN $SENTRY_DSN
 ENV WAFP_RUN_ID $WAFP_RUN_ID
 ENV WAFP_FUZZER_ID $WAFP_FUZZER_ID

@@ -13,7 +13,7 @@ export PGPASSWORD=test
 } 2>/dev/null
 
 # Translation from the tasks.py which fails with an internal error relevant to the `invoke` usage
-flyway migrate -q -url="jdbc:postgresql://db:5432/test?user=test&password=test" -locations=filesystem:data/migrations
+flyway migrate -q -n -url="jdbc:postgresql://db:5432/test?user=test&password=test" -locations=filesystem:data/migrations
 psql -h db -U test -v ON_ERROR_STOP=1 -f data/sample_db.sql || true  # Fails on the second time
 python manage.py refresh_materialized
 python manage.py create_index

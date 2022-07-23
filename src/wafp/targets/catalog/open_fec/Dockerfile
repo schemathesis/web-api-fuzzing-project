@@ -23,10 +23,9 @@ RUN sed -i 's/flyway.url=/flyway.url=jdbc:postgresql:\/\/db:5432\/test?user=test
   sed -i 's/http:\/\/localhost:9200/http:\/\/elastic:9200/g' /app/webservices/utils.py
 
 WORKDIR /app
-RUN pip install -r requirements.txt
+COPY requirements.txt frozen-requirements.txt
+RUN pip install --no-cache-dir -r frozen-requirements.txt
 
-# Sentry integration
-RUN pip install --upgrade 'sentry-sdk[flask]'
 ENV SENTRY_DSN $SENTRY_DSN
 ENV WAFP_RUN_ID $WAFP_RUN_ID
 ENV WAFP_FUZZER_ID $WAFP_FUZZER_ID

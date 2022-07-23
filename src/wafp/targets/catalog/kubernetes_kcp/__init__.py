@@ -1,8 +1,7 @@
 import os
 import shutil
-from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict
+from typing import Dict, List, Optional, TypedDict
 
 import attr
 import yaml
@@ -20,7 +19,8 @@ from wafp.targets import (
 
 KUBECONFIG_FILENAME = "admin.kubeconfig"
 KCP_DATA_PATH = Path(__file__).parent.absolute() / "kcp_data" / ".kcp"
-ROOT_CLUSTER_ADMIN_USERNAME = "admin"
+KUBECONFIG_PATH = KCP_DATA_PATH / KUBECONFIG_FILENAME
+ROOT_CLUSTER_ADMIN_USERNAME = "shard-admin"
 
 
 @attr.s
@@ -30,11 +30,10 @@ class Default(BaseTarget):
     #   and / or
     # - move etcd dump to targets artifacts folder after run ends
 
-    # port: int = attr.field(factory=lambda: 6443)
     fuzzer_skip_ssl_verify: bool = attr.ib(default=True)
 
     def get_base_url(self) -> str:
-        # self.port does not work despite it was overrided in this child class, random came anyway
+        # self.port does not work despite it was overridden in this child class, random came anyway
         # hardcode it for now
         return "https://0.0.0.0:6443"
 
@@ -65,16 +64,39 @@ class Default(BaseTarget):
         shutil.rmtree(KCP_DATA_PATH, ignore_errors=True)
 
     def after_start(self, stdout: bytes, headers: Dict[str, str]) -> None:
-        headers["Authorization"] = f"Bearer {self.auth_token}"
+        user_token = read_user_token()
+        if user_token is None:
+            raise RuntimeError(f"Failed to find access token for user `{ROOT_CLUSTER_ADMIN_USERNAME}`")
+        headers["Authorization"] = f"Bearer {user_token}"
 
-    @cached_property
-    def auth_token(self) -> str:
-        with open(KCP_DATA_PATH / KUBECONFIG_FILENAME, "r") as fd:
-            kubeconfig = fd.read()
-        # TODO look up for kubeconfig type
-        return self._get_user_token_from_kubeconfig(yaml.safe_load(kubeconfig), ROOT_CLUSTER_ADMIN_USERNAME)
 
-    @staticmethod
-    def _get_user_token_from_kubeconfig(kubeconfig: Dict[Any, Any], user_name: str) -> str:
-        user = next(filter(lambda x: x.get("name") == user_name, kubeconfig["users"]))
-        return str(user.get("user", {}).get("token", ""))
+def read_user_token(path: Path = KUBECONFIG_PATH) -> Optional[str]:
+    with path.open() as fd:
+        kubeconfig = yaml.safe_load(fd)
+    return extract_user_token(kubeconfig)
+
+
+class UserData(TypedDict):
+    token: str
+
+
+class User(TypedDict):
+    name: str
+    user: UserData
+
+
+class KubeConfig(TypedDict):
+    users: List[User]
+
+
+def extract_user_token(kubeconfig: KubeConfig, username: str = ROOT_CLUSTER_ADMIN_USERNAME) -> Optional[str]:
+    """Extract the admin's token from kubeconfig file."""
+    if not isinstance(kubeconfig, dict):
+        raise ValueError(f"Invalid `{KUBECONFIG_FILENAME}` content: {kubeconfig!r}")
+    try:
+        for user in kubeconfig["users"]:
+            if user["name"] == username:
+                return user["user"]["token"]
+    except KeyError:
+        return None
+    return None

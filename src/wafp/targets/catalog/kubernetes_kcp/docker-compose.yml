@@ -1,7 +1,7 @@
 version: '3'
 services:
   kcp:
-    image: ghcr.io/kcp-dev/kcp:latest
+    image: ghcr.io/kcp-dev/kcp:f10dbc1
     environment:
       - UID=${UID-1000}
       - GID=${GID-1000}

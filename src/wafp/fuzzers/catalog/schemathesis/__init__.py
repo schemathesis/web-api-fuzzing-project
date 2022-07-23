@@ -1,6 +1,6 @@
 import os
 from textwrap import dedent
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from wafp.fuzzers import BaseFuzzer, FuzzerContext
 from wafp.utils import NotSet
@@ -12,8 +12,12 @@ class Default(BaseFuzzer):
         return bool(os.environ.get("SCHEMATHESIS_REPORT", False))
 
     @property
-    def saas_token(self) -> str:
-        return os.environ.get("SCHEMATHESIS_TOKEN", "")
+    def saas_token(self) -> Optional[str]:
+        return os.environ.get("SCHEMATHESIS_TOKEN")
+
+    @property
+    def api_name(self) -> Optional[str]:
+        return os.environ.get("SCHEMATHESIS_API_NAME")
 
     def get_entrypoint_args(
         self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str], ssl_insecure: bool = False
@@ -32,12 +36,20 @@ class Default(BaseFuzzer):
             for key, value in headers.items():
                 args.extend(["-H", f"{key}: {value}"])
         if ssl_insecure:
-            args.extend(["--request-tls-verify=false"])
-        if self.send_report_requested and self.saas_token:
+            args.append("--request-tls-verify=false")
+        if self.send_report_requested:
             self.logger.info("Report gonna be sent to schemathesis.io")
-            args.extend(["--report", f"--schemathesis-io-token={self.saas_token}"])
+            args.append("--report")
+        if self.saas_token:
+            args.append(f"--schemathesis-io-token={self.saas_token}")
         extend_entrypoint_args(context, args)
         return args
+
+    def get_environment_variables(self) -> Dict[str, str]:
+        env = super().get_environment_variables()
+        if self.api_name is not None:
+            env["SCHEMATHESIS_API_NAME"] = self.api_name
+        return env
 
 
 def extend_entrypoint_args(context: FuzzerContext, args: List[str]) -> None:

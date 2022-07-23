@@ -27,6 +27,7 @@ jobs:
         env:
           SCHEMATHESIS_REPORT: 'true'
           SCHEMATHESIS_TOKEN: ${{ secrets.SCHEMATHESIS_TOKEN }}
+          SCHEMATHESIS_API_NAME: 'kubernetes-kcp'
         run: poetry run wafp schemathesis:Fast kubernetes_kcp --output-dir=./artifacts
 
       - name: Archive artifacts

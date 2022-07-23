@@ -1,8 +1,7 @@
 version: '3'
 services:
   web:
-    build:
-      context: https://github.com/mailhog/MailHog.git#0441dd494b03c9255a9b8e90e3458ebb115eacff
+    build: .
     init: true
     environment:
       - PORT

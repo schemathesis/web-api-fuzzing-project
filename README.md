@@ -4,6 +4,11 @@ The WAFP project is a test suite for evaluating various characteristics of Web A
 WAFP is fully runnable as a CLI tool that spins up fuzzing targets & runs fuzzers against them.
 The project started as an evaluation suite for the `Property-Based Testing of Web APIs` academic paper by Zac Hatfield-Dodds (@Zac-HD) and Dmitry Dygalo (@Stranger6667).
 
+## Key links
+
+- [*Deriving Semantics-Aware Fuzzers from Web API Schemas*](), our paper on arXiv.org
+- [Unprocessed data (23 GB)](https://zenodo.org/record/5339649) and [processed data (263 MB)](https://zenodo.org/record/5392010) for our paper, on zenodo.org
+
 ## Installation
 
 WAFP is built around Docker and is tested against the `20.10.0` version. Check [the official Docker docs](https://docs.docker.com/get-docker/) for installation guide.

@@ -88,10 +88,7 @@ def main(
             )
             result.cleanup()
     store_metadata(output_dir, cli_args.fuzzer, cli_args.target, target.run_id, result.duration)
-    # workaround for poetry issue, in order to make wafp more friendly to CI-systems
-    # see https://github.com/python-poetry/poetry/issues/2369
-    # TODO: rollback this when 1.2.0 will be released.
-    sys.exit(result.completed_process.returncode)
+    return result.completed_process.returncode
 
 
 def store_metadata(output_dir: pathlib.Path, fuzzer: str, target: str, run_id: str, duration: float) -> None:

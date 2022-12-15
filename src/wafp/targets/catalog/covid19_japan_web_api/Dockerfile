@@ -1,3 +1,6 @@
+ARG repository=https://github.com/ryo-ma/covid19-japan-web-api.git
+ARG revision=2c7ff7383100c2f7e652d15388f6b46324575a31
+
 FROM python:3.6.12-slim
 
 LABEL name="covid19-japan-web-api"
@@ -6,10 +9,10 @@ RUN apt-get update \
     && groupadd test \
     && useradd --gid test --create-home --home-dir /home/test test \
     && apt-get install -y git \
-    && git clone https://github.com/ryo-ma/covid19-japan-web-api.git /app \
+    && git clone $repository /app \
     && chown test -R /app \
     && cd /app \
-    && git checkout 2c7ff7383100c2f7e652d15388f6b46324575a31 \
+    && git checkout $revision \
     && apt remove -y git \
     && apt -y autoremove \
     && rm -rf /var/lib/apt/lists/*

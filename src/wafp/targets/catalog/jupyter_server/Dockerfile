@@ -1,3 +1,6 @@
+ARG repository=https://github.com/jupyter-server/jupyter_server.git
+ARG revision=fad6c970949503d99658b583d7ac13c8d6e58973
+
 FROM python:3.8.6-slim
 
 LABEL name="jupyter-server"
@@ -6,10 +9,10 @@ RUN apt-get update \
     && groupadd test \
     && useradd --gid test --create-home --home-dir /home/test test \
     && apt-get install -y git \
-    && git clone https://github.com/jupyter-server/jupyter_server.git /app \
+    && git clone $repository /app \
     && chown test -R /app \
     && cd /app \
-    && git checkout fad6c970949503d99658b583d7ac13c8d6e58973 \
+    && git checkout $revision \
     && apt remove -y git \
     && apt -y autoremove \
     && rm -rf /var/lib/apt/lists/*

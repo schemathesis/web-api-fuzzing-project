@@ -1,3 +1,6 @@
+ARG repository=https://github.com/fecgov/openFEC.git
+ARG revision=ea5aa5db7e847d2de0de8be07cb1dcc029cd5a05
+
 FROM python:3.7.9-slim
 
 LABEL name="open-fec"
@@ -9,11 +12,11 @@ RUN apt-get update \
     && useradd --gid test --create-home --home-dir /home/test test \
     && apt-get install -y git libpq-dev build-essential python3-dev wget postgresql-client \
     && wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/$FLYWAY_VERSION/flyway-commandline-$FLYWAY_VERSION-linux-x64.tar.gz | tar xvz && ln -s `pwd`/flyway-$FLYWAY_VERSION/flyway /usr/local/bin \
-    && git clone --depth 1 https://github.com/fecgov/openFEC.git /app \
+    && git clone --depth 1 $repository /app \
     && chown test -R /app \
     && cd /app \
-    && git fetch --depth 1 origin ea5aa5db7e847d2de0de8be07cb1dcc029cd5a05 \
-    && git checkout ea5aa5db7e847d2de0de8be07cb1dcc029cd5a05 \
+    && git fetch --depth 1 origin $revision \
+    && git checkout $revision \
     && apt remove -y wget \
     && apt -y autoremove \
     && rm -rf /var/lib/apt/lists/*

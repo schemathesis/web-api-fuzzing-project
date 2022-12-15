@@ -1,3 +1,6 @@
+ARG repository=https://github.com/creativecommons/cccatalog-api.git
+ARG revision=87bf3f702170483f3576e004162f68191c6654df
+
 FROM python:3.7-stretch
 
 ENV PYTHONBUFFERED 1
@@ -5,9 +8,9 @@ ENV PYTHONBUFFERED 1
 RUN apt-get update \
     && apt-get install -y git libexempi3 \
     && mkdir -p /var/log/cccatalog-api/cccatalog-api.log \
-    && git clone https://github.com/creativecommons/cccatalog-api.git \
+    && git clone $repository \
     && cd cccatalog-api \
-    && git checkout 87bf3f702170483f3576e004162f68191c6654df
+    && git checkout $revision
 
 WORKDIR /cccatalog-api/cccatalog-api
 

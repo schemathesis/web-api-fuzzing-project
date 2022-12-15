@@ -1,10 +1,13 @@
+ARG repository=https://github.com/rtyler/otto.git
+ARG revision=504d49884649b658dbce8828390a4e0b81450ad1
+
 FROM rust:1.48-slim as builder
 
 RUN apt-get update \
     && apt-get install -y git \
-    && git clone https://github.com/rtyler/otto.git /app \
+    && git clone $repository /app \
     && cd /app \
-    && git checkout 504d49884649b658dbce8828390a4e0b81450ad1 \
+    && git checkout $revision \
     && apt remove -y git \
     && apt -y autoremove \
     && rm -rf /var/lib/apt/lists/*

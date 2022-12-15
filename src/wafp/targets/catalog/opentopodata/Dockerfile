@@ -1,3 +1,6 @@
+ARG repository=https://github.com/ajnisbet/opentopodata.git
+ARG revision=3f6c20efb737c4b054a3407256e119cd8050fca8
+
 # Container for packages that need to be built from source but have massive dev dependencies.
 FROM python:3.7.9-slim-buster as builder
 
@@ -22,11 +25,11 @@ RUN set -e \
     && groupadd test \
     && useradd --gid test --create-home --home-dir /home/test test \
     && apt-get install -y --no-install-recommends git nginx memcached supervisor \
-    && git clone --depth 1 https://github.com/ajnisbet/opentopodata.git /app \
+    && git clone --depth 1 $repository /app \
     && chown test -R /app \
     && cd /app \
-    && git fetch --depth 1 origin 3f6c20efb737c4b054a3407256e119cd8050fca8 \
-    && git checkout 3f6c20efb737c4b054a3407256e119cd8050fca8 \
+    && git fetch --depth 1 origin $revision \
+    && git checkout $revision \
     && apt -y autoremove \
     && rm -rf /var/lib/apt/lists/*
 

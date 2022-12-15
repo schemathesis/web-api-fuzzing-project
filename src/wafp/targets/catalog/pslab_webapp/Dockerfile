@@ -1,3 +1,6 @@
+ARG repository=https://github.com/fossasia/pslab-webapp.git
+ARG revision=624e56fcae939b11e4e671e0fbde816a9e17162c
+
 FROM python:3.6.12-stretch
 
 LABEL name="pslab-webapp"
@@ -8,10 +11,10 @@ RUN apt-get update \
     && useradd --gid test --create-home --home-dir /home/test test \
     && apt-get install -y git libpq-dev \
     && pip install --no-cache-dir -r frozen-requirements.txt \
-    && git clone https://github.com/fossasia/pslab-webapp.git /app \
+    && git clone $repository /app \
     && chown test -R /app \
     && cd /app \
-    && git checkout 624e56fcae939b11e4e671e0fbde816a9e17162c \
+    && git checkout $revision \
     && apt remove -y git \
     && apt -y autoremove \
     && rm -rf /var/lib/apt/lists/*

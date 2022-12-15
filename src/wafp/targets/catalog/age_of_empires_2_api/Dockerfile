@@ -1,3 +1,6 @@
+ARG repository=https://github.com/aalises/age-of-empires-II-api.git
+ARG revision=6bd9f29933382838a0e5b7b16f0e318ec6d312a6
+
 FROM python:3.7-slim AS source
 
 LABEL name="age_of_empires_2_api"
@@ -6,10 +9,10 @@ RUN apt-get update \
     && groupadd test \
     && useradd --gid test --create-home --home-dir /home/test test \
     && apt-get install -y git \
-    && git clone https://github.com/aalises/age-of-empires-II-api.git /app-tmp \
+    && git clone $repository /app-tmp \
     && chown test -R /app-tmp \
     && cd /app-tmp \
-    && git checkout 6bd9f29933382838a0e5b7b16f0e318ec6d312a6 \
+    && git checkout $revision \
     && apt -y autoremove \
     && rm -rf /var/lib/apt/lists/*
 

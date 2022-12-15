@@ -1,12 +1,15 @@
+ARG repository=https://github.com/Yelp/fuzz-lightyear.git
+ARG revision=e558337134ee9b938e95026708ecdc139d409327
+
 FROM python:3.8.6-slim
 
 LABEL name="fuzz-lightyear"
 
 RUN apt-get update \
     && apt-get install -y git \
-    && git clone https://github.com/Yelp/fuzz-lightyear.git /app \
+    && git clone $repository /app \
     && cd /app \
-    && git checkout e558337134ee9b938e95026708ecdc139d409327 \
+    && git checkout $revision \
     && apt remove -y git \
     && apt -y autoremove \
     && rm -rf /var/lib/apt/lists/*

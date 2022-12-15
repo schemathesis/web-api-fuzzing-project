@@ -1,3 +1,6 @@
+ARG repository=https://github.com/pulp/pulpcore.git
+ARG revision=af6689103fc5a6f3fad0422332ad24a1ac0fa05e
+
 FROM python:3.8.6-slim
 
 LABEL name="pulpcore"
@@ -6,10 +9,10 @@ RUN apt-get update \
     && groupadd test \
     && useradd --gid test --create-home --home-dir /home/test test \
     && apt-get install -y git libpq-dev gcc \
-    && git clone https://github.com/pulp/pulpcore.git /app \
+    && git clone $repository /app \
     && cd /app \
     && chown test -R /app \
-    && git checkout af6689103fc5a6f3fad0422332ad24a1ac0fa05e \
+    && git checkout $revision \
     && apt remove -y git \
     && apt -y autoremove \
     && rm -rf /var/lib/apt/lists/*

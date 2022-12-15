@@ -1,10 +1,13 @@
+ARG repository=https://github.com/IBM/worklog.git
+ARG revision=14a176ef233c7996a37fcb24e72d5e2f03993f9a
+
 FROM python:3.7-alpine
 
 COPY requirements.txt frozen-requirements.txt
 RUN apk add --no-cache git gcc g++ make libffi-dev openssl-dev \
-    && git clone https://github.com/IBM/worklog.git /app \
+    && git clone $repository /app \
     && cd /app \
-    && git checkout 14a176ef233c7996a37fcb24e72d5e2f03993f9a \
+    && git checkout $revision \
     && pip install --no-cache-dir -r /frozen-requirements.txt \
     && apk del git gcc g++ make
 

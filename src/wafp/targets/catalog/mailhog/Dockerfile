@@ -1,3 +1,5 @@
+ARG revision=4231f068f1084263da090ac17f3e1672a1303946
+
 FROM golang:1.18-alpine as builder
 
 # Install MailHog:
@@ -5,7 +7,7 @@ RUN apk --no-cache add --virtual build-dependencies \
     git \
   && mkdir -p /root/gocode \
   && export GOPATH=/root/gocode \
-  && go install github.com/mailhog/MailHog@4231f068f1084263da090ac17f3e1672a1303946
+  && go install github.com/mailhog/MailHog@$revision
 
 FROM alpine:3
 # Add mailhog user/group with uid/gid 1000.

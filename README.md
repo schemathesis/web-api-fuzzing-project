@@ -2,12 +2,20 @@
 
 The WAFP project is a test suite for evaluating various characteristics of Web API fuzzers.
 WAFP is fully runnable as a CLI tool that spins up fuzzing targets & runs fuzzers against them.
-The project started as an evaluation suite for the `Property-Based Testing of Web APIs` academic paper by Zac Hatfield-Dodds (@Zac-HD) and Dmitry Dygalo (@Stranger6667).
 
-## Key links
+## Citation
 
-- [*Deriving Semantics-Aware Fuzzers from Web API Schemas*](), our paper on arXiv.org
-- [Unprocessed data (23 GB)](https://zenodo.org/record/5339649) and [processed data (263 MB)](https://zenodo.org/record/5392010) for our paper, on zenodo.org
+If you use WAFP in research, please cite our paper
+[*Deriving Semantics-Aware Fuzzers from Web API Schemas*](https://arxiv.org/abs/2112.10328)
+by Zac Hatfield-Dodds (@Zac-HD) and Dmitry Dygalo (@Stranger6667) - we built it to
+evaluate Schemathesis, it's designed to be extensible.  Our goal was to make future
+studies as easy -- and easy to compare -- as possible.
+
+Use it as-is, or extend it and contribute new tools, targets, or integrations
+back to our repo so that others can benefit from your hard work!
+
+If you just want to grab results, see Zenodo: [unprocessed data (23 GB)](https://zenodo.org/record/5339649)
+and [processed data (263 MB)](https://zenodo.org/record/5392010).
 
 ## Installation
 
@@ -45,7 +53,7 @@ python run.py --output-dir=./artifacts --iterations=30
 
 It will run all the defined combinations for 30 times and store the artifacts in the `./artifacts` directory.
 The combinations are defined in the `COMBINATIONS` variable in the `run.py` file. It excludes combinations that are known
-to not work for some reason (usually due to fuzzer failures). 
+to not work for some reason (usually due to fuzzer failures).
 
 Note, that the `run.py` file does not include the Sentry integration (see below).
 

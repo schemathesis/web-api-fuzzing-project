@@ -1,0 +1,45 @@
+cff-version: 1.2.0
+message: |
+  We built the Web API Fuzzing Project (WAFP) to evaluate our
+  own tool, but designed it to be extensible: our goal was to
+  make future studies as easy -- and easy to compare -- as
+  possible.
+
+  Use it as-is, or extend it and contribute new tools, targets,
+  or integrations back to our repo so that others can benefit
+  from your hard work!
+
+  Useful links:
+    - https://arxiv.org/abs/2112.10328 (our paper)
+    - https://github.com/schemathesis/web-api-fuzzing-project (repo)
+    - https://zenodo.org/record/5339649 (unprocessed data, 23 GB)
+    - https://zenodo.org/record/5392010 (processed data, 263 MB)
+
+
+preferred-citation:
+  title: 'Deriving Semantics-Aware Fuzzers from Web API Schemas'
+  date-released: 2021-12-20
+  type: article
+  doi: 10.48550/ARXIV.2112.10328
+  authors:
+    - family-names: Hatfield-Dodds
+      given-names: Zac
+      orcid: https://orcid.org/0000-0002-8646-8362
+      affiliation: Australian National University
+    - family-names: Dygalo
+      given-names: Dmitry
+      affiliation: Schemathesis.io
+
+# Citation metadata for the software itself, as required by the CFF spec
+doi: 10.5281/zenodo.5171795  # Version-independent DOI for the software archive
+title: 'Web API Fuzzing Project (WAFP)'
+repository-code: https://github.com/schemathesis/web-api-fuzzing-project
+license: MIT
+authors:
+    - family-names: Hatfield-Dodds
+      given-names: Zac
+      orcid: https://orcid.org/0000-0002-8646-8362
+      affiliation: Australian National University
+    - family-names: Dygalo
+      given-names: Dmitry
+      affiliation: Schemathesis.io

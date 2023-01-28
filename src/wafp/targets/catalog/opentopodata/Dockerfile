@@ -1,9 +1,6 @@
 # Container for packages that need to be built from source but have massive dev dependencies.
 FROM python:3.7.9-slim-buster as builder
 
-ARG repository=https://github.com/ajnisbet/opentopodata.git
-ARG revision=3f6c20efb737c4b054a3407256e119cd8050fca8
-
 LABEL name="opentopodata-builder"
 
 RUN set -e && \
@@ -18,6 +15,9 @@ RUN pip wheel --wheel-dir=/root/wheels uwsgi==2.0.19.1 && \
 # The actual container.
 FROM python:3.7.9-slim-buster
 
+ARG repository=https://github.com/ajnisbet/opentopodata.git
+ARG revision=3f6c20efb737c4b054a3407256e119cd8050fca8
+
 LABEL name="opentopodata"
 
 RUN set -e \
@@ -25,6 +25,7 @@ RUN set -e \
     && groupadd test \
     && useradd --gid test --create-home --home-dir /home/test test \
     && apt-get install -y --no-install-recommends git nginx memcached supervisor \
+    && git config --global --add safe.directory /app \
     && git clone --depth 1 $repository /app \
     && chown test -R /app \
     && cd /app \

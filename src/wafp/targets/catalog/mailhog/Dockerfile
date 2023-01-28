@@ -1,6 +1,6 @@
-ARG revision=4231f068f1084263da090ac17f3e1672a1303946
-
 FROM golang:1.18-alpine as builder
+
+ARG revision=4231f068f1084263da090ac17f3e1672a1303946
 
 # Install MailHog:
 RUN apk --no-cache add --virtual build-dependencies \

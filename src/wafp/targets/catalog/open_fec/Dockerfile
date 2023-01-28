@@ -12,6 +12,7 @@ RUN apt-get update \
     && useradd --gid test --create-home --home-dir /home/test test \
     && apt-get install -y git libpq-dev build-essential python3-dev wget postgresql-client \
     && wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/$FLYWAY_VERSION/flyway-commandline-$FLYWAY_VERSION-linux-x64.tar.gz | tar xvz && ln -s `pwd`/flyway-$FLYWAY_VERSION/flyway /usr/local/bin \
+    && git config --global --add safe.directory /app \
     && git clone --depth 1 $repository /app \
     && chown test -R /app \
     && cd /app \

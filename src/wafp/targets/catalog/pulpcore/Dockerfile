@@ -9,6 +9,7 @@ RUN apt-get update \
     && groupadd test \
     && useradd --gid test --create-home --home-dir /home/test test \
     && apt-get install -y git libpq-dev gcc \
+    && git config --global --add safe.directory /app \
     && git clone $repository /app \
     && cd /app \
     && chown test -R /app \
@@ -18,6 +19,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+COPY requirements.txt requirements.txt
 
 RUN pip install .
 
@@ -29,7 +32,7 @@ ENV WAFP_FUZZER_ID $WAFP_FUZZER_ID
 ENV PYTHONPATH /app
 COPY sitecustomize.py /app
 
-RUN mkdir -p /var/lib/pulp/tmp && chown -R test /var/lib/pulp
+RUN mkdir -p /var/lib/pulp/tmp && mkdir -p /var/lib/pulp/assets/ && chown -R test /var/lib/pulp
 
 USER test
 

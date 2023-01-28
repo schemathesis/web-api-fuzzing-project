@@ -1,7 +1,7 @@
+FROM python:3.7-slim AS source
+
 ARG repository=https://github.com/aalises/age-of-empires-II-api.git
 ARG revision=6bd9f29933382838a0e5b7b16f0e318ec6d312a6
-
-FROM python:3.7-slim AS source
 
 LABEL name="age_of_empires_2_api"
 

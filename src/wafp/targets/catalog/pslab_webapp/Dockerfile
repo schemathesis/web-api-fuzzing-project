@@ -1,7 +1,7 @@
+FROM python:3.6.12-stretch
+
 ARG repository=https://github.com/fossasia/pslab-webapp.git
 ARG revision=624e56fcae939b11e4e671e0fbde816a9e17162c
-
-FROM python:3.6.12-stretch
 
 LABEL name="pslab-webapp"
 

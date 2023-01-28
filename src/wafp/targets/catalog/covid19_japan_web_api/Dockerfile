@@ -1,7 +1,7 @@
+FROM python:3.6.12-slim
+
 ARG repository=https://github.com/ryo-ma/covid19-japan-web-api.git
 ARG revision=2c7ff7383100c2f7e652d15388f6b46324575a31
-
-FROM python:3.6.12-slim
 
 LABEL name="covid19-japan-web-api"
 

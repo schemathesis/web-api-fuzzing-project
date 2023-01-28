@@ -1,7 +1,7 @@
+FROM python:3.8.6-alpine
+
 ARG repository=https://github.com/Teebytes/TnT-Fuzzer.git
 ARG revision=c1b333ced51d515e45827d7817a8004cadb98d45
-
-FROM python:3.8.6-alpine
 
 LABEL name="TnT-Fuzzer"
 

@@ -1,7 +1,7 @@
+FROM python:3.7-stretch
+
 ARG repository=https://github.com/creativecommons/cccatalog-api.git
 ARG revision=87bf3f702170483f3576e004162f68191c6654df
-
-FROM python:3.7-stretch
 
 ENV PYTHONBUFFERED 1
 

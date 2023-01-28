@@ -1,7 +1,7 @@
+FROM python:3.8-slim
+
 ARG repository=https://github.com/microsoft/restler-fuzzer.git
 ARG revision=ad867673db70c6f39807a57314a89e86e2346ece
-
-FROM python:3.8-slim
 
 LABEL name="restler-demo"
 

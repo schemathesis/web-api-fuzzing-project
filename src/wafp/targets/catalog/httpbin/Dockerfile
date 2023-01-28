@@ -1,7 +1,7 @@
+FROM ubuntu:18.04
+
 ARG repository=https://github.com/postmanlabs/httpbin.git
 ARG revision=f8ec666b4d1b654e4ff6aedd356f510dcac09f83
-
-FROM ubuntu:18.04
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8

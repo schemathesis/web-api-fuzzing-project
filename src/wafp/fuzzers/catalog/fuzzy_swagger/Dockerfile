@@ -1,7 +1,7 @@
+FROM python:3.6.13-slim
+
 ARG repository=https://github.com/namuan/fuzzy-swagger.git
 ARG revision=d8ec5eed70c9ac6771592e608ac9620223c940de
-
-FROM python:3.6.13-slim
 
 LABEL name="Fuzzy-swagger"
 

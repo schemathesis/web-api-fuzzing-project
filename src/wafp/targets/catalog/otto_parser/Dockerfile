@@ -1,7 +1,7 @@
+FROM rust:1.48-slim as builder
+
 ARG repository=https://github.com/rtyler/otto.git
 ARG revision=504d49884649b658dbce8828390a4e0b81450ad1
-
-FROM rust:1.48-slim as builder
 
 RUN apt-get update \
     && apt-get install -y git \

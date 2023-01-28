@@ -1,7 +1,7 @@
+FROM python:3.8.6-slim
+
 ARG repository=https://github.com/Yelp/fuzz-lightyear.git
 ARG revision=e558337134ee9b938e95026708ecdc139d409327
-
-FROM python:3.8.6-slim
 
 LABEL name="fuzz-lightyear"
 

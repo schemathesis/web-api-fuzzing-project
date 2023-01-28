@@ -1,7 +1,7 @@
+FROM python:3.8.6-slim
+
 ARG repository=https://github.com/pulp/pulpcore.git
 ARG revision=af6689103fc5a6f3fad0422332ad24a1ac0fa05e
-
-FROM python:3.8.6-slim
 
 LABEL name="pulpcore"
 

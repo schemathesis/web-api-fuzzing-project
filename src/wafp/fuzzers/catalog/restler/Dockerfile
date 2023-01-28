@@ -1,7 +1,7 @@
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine AS builder
+
 ARG repository=https://github.com/microsoft/restler-fuzzer.git
 ARG revision=a0ba706a2156e31cf6053b639b57aa1b9acad442
-
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine AS builder
 
 RUN apk add --no-cache git python3 \
     && git clone $repository /app \

@@ -1,7 +1,7 @@
+FROM python:3.8.6-slim
+
 ARG repository=https://github.com/KissPeter/APIFuzzer.git
 ARG revision=b786c1b96366b953fd375036f16f3a50c41d7111
-
-FROM python:3.8.6-slim
 
 LABEL name="APIFuzzer"
 

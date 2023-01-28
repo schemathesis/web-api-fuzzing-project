@@ -31,6 +31,9 @@ class Default(BaseFuzzer):
             f"--host={parsed.netloc}",
             "--log_all",
         ]
+        iterations = self.kwargs.get("iterations")
+        if iterations is not None:
+            args.append(f"--iterations={iterations}")
         if headers:
             serialized_headers = json.dumps(headers)
             args.append(f"--headers={serialized_headers}")

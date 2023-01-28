@@ -10,7 +10,7 @@ from ..targets import targets_catalog
 
 @pytest.fixture(params=fuzzers_loader.get_all_variants())
 def fuzzer(request):
-    instance = fuzzers_loader.by_name(request.param)(max_examples=1)
+    instance = fuzzers_loader.by_name(request.param)(max_examples=1, iterations=1)
     yield instance
     instance.stop()
     instance.cleanup()

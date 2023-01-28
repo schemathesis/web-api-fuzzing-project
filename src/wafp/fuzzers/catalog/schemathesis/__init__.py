@@ -1,3 +1,4 @@
+import abc
 import os
 from textwrap import dedent
 from typing import Dict, List, Optional, Union
@@ -5,8 +6,18 @@ from typing import Dict, List, Optional, Union
 from wafp.fuzzers import BaseFuzzer, FuzzerContext
 from wafp.utils import NotSet
 
+DEFAULT_MAX_EXAMPLES = 100
 
-class Default(BaseFuzzer):
+
+class BaseSchemathesisFuzzer(BaseFuzzer, abc.ABC):
+    __collect__ = False
+
+    @property
+    def max_examples(self) -> int:
+        return self.kwargs.get("max_examples", DEFAULT_MAX_EXAMPLES)
+
+
+class Default(BaseSchemathesisFuzzer):
     @property
     def send_report_requested(self) -> bool:
         return bool(os.environ.get("SCHEMATHESIS_REPORT", False))
@@ -29,6 +40,7 @@ class Default(BaseFuzzer):
             "--validate-schema=false",
             "--hypothesis-suppress-health-check=filter_too_much,too_slow",
             "--hypothesis-deadline=None",
+            f"--hypothesis-max-examples={self.max_examples}",
             "--debug-output-file=/tmp/wafp/output/out.jsonl",
             "--no-color",
         ]
@@ -80,12 +92,9 @@ class Negative(Default):
 
 
 class Fast(Default):
-    def get_entrypoint_args(
-        self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str], ssl_insecure: bool = False
-    ) -> List[str]:
-        args = super().get_entrypoint_args(context, schema, base_url, headers, ssl_insecure)
-        args.append("--hypothesis-max-examples=10")
-        return args
+    @property
+    def max_examples(self) -> int:
+        return 10
 
 
 class StatefulOld(Default):
@@ -97,7 +106,7 @@ class StatefulOld(Default):
         return args
 
 
-class StatefulNew(BaseFuzzer):
+class StatefulNew(BaseSchemathesisFuzzer):
     def get_entrypoint(self) -> Union[str, NotSet]:
         return "pytest"
 
@@ -149,7 +158,7 @@ class APIWorkflow(schema.as_state_machine()):
         )
 
 TestCase = APIWorkflow.TestCase
-TestCase.settings = settings(max_examples=100, suppress_health_check=HealthCheck.all(), deadline=None)
+TestCase.settings = settings(max_examples={self.max_examples}, suppress_health_check=HealthCheck.all(), deadline=None)
 """
             )
         )

@@ -18,4 +18,6 @@ WORKDIR /app
 
 RUN pip install -r requirements.txt
 
+COPY fuzzer.py fuzzer.py
+
 ENTRYPOINT ["python", "fuzzer.py"]

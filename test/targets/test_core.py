@@ -3,6 +3,8 @@ from time import sleep
 
 import pytest
 
+from wafp.constants import COMPOSE_PROJECT_NAME_PREFIX
+
 
 @pytest.fixture
 def running_target(target):
@@ -24,13 +26,13 @@ def assert_until(func, max_retries=3, delay=0.5):
 
 def test_compose_up(target):
     output = target.compose.up().stdout
-    assert b"wafp_example_target_web_1 ... done" in output
+    assert f"{COMPOSE_PROJECT_NAME_PREFIX}example_target_web_1 ... done".encode() in output
 
 
 def test_compose_up_build(target):
     output = target.compose.up(build=True).stdout
     assert b"Building web" in output
-    assert b"wafp_example_target_web_1 ... done" in output
+    assert f"{COMPOSE_PROJECT_NAME_PREFIX}example_target_web_1 ... done".encode() in output
 
 
 @pytest.mark.usefixtures("running_target")
@@ -47,12 +49,14 @@ def test_compose_log_stream(target):
 
 @pytest.mark.usefixtures("running_target")
 def test_compose_stop(target):
-    assert b"Stopping wafp_example_target_web_1 ... done" in target.compose.stop().stdout
+    assert (
+        f"Stopping {COMPOSE_PROJECT_NAME_PREFIX}example_target_web_1 ... done".encode() in target.compose.stop().stdout
+    )
 
 
 @pytest.mark.usefixtures("running_target")
 def test_compose_rm(target):
-    assert b"Removing wafp_example_target_web_1 ... done" in target.compose.rm().stdout
+    assert f"Removing {COMPOSE_PROJECT_NAME_PREFIX}example_target_web_1 ... done".encode() in target.compose.rm().stdout
 
 
 def test_manually_removed_image(target):

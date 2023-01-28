@@ -1,3 +1,6 @@
+from wafp.constants import COMPOSE_PROJECT_NAME_PREFIX
+
+
 def test_run(fuzzer):
     result = fuzzer.start("http://127.0.0.1:1/openapi.json", "http://127.0.0.1:1/")
     assert result.completed_process.returncode != 0
@@ -15,7 +18,7 @@ def test_without_volumes(fuzzer):
         "-f",
         "docker-compose.yml",
         "-p",
-        "wafp_example_fuzzer",
+        f"{COMPOSE_PROJECT_NAME_PREFIX}example_fuzzer",
         "run",
         "fuzzer",
         "http://127.0.0.1:1/openapi.json",

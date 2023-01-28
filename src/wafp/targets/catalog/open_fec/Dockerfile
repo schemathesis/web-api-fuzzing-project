@@ -1,7 +1,7 @@
+FROM python:3.7.9-slim
+
 ARG repository=https://github.com/fecgov/openFEC.git
 ARG revision=ea5aa5db7e847d2de0de8be07cb1dcc029cd5a05
-
-FROM python:3.7.9-slim
 
 LABEL name="open-fec"
 

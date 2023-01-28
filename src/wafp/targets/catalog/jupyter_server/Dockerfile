@@ -1,7 +1,7 @@
+FROM python:3.8.6-slim
+
 ARG repository=https://github.com/jupyter-server/jupyter_server.git
 ARG revision=fad6c970949503d99658b583d7ac13c8d6e58973
-
-FROM python:3.8.6-slim
 
 LABEL name="jupyter-server"
 

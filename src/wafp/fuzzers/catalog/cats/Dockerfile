@@ -1,7 +1,7 @@
+FROM maven:3.6.3-jdk-8-slim
+
 ARG repository=https://github.com/Endava/cats.git
 ARG revision=e8dc1e1a90a6a3e0634debadf3d2ba22702fe524
-
-FROM maven:3.6.3-jdk-8-slim
 
 LABEL name="Cats"
 

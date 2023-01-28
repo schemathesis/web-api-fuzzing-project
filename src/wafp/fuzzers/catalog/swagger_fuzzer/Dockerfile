@@ -1,7 +1,7 @@
+FROM python:3.5-slim
+
 ARG repository=https://github.com/Lothiraldan/swagger-fuzzer.git
 ARG revision=b0d2ab9298bdd7f8c39c2d6ee449c70d44b1b472
-
-FROM python:3.5-slim
 
 LABEL name="Swagger-Fuzzer"
 

@@ -1,8 +1,8 @@
-ARG repository=https://github.com/ajnisbet/opentopodata.git
-ARG revision=3f6c20efb737c4b054a3407256e119cd8050fca8
-
 # Container for packages that need to be built from source but have massive dev dependencies.
 FROM python:3.7.9-slim-buster as builder
+
+ARG repository=https://github.com/ajnisbet/opentopodata.git
+ARG revision=3f6c20efb737c4b054a3407256e119cd8050fca8
 
 LABEL name="opentopodata-builder"
 

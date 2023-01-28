@@ -19,8 +19,10 @@ RUN pip install --upgrade pip \
     && pip install --upgrade setuptools \
     && pip install --upgrade pipenv
 
+COPY Pipfile.lock Pipfile.lock
+
 # Install the dependencies system-wide
-RUN pipenv install --deploy --system --dev
+RUN pipenv install --deploy --system --ignore-pipfile
 
 # Sentry integration
 RUN pip install --upgrade 'sentry-sdk'

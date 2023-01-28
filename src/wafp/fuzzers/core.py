@@ -17,7 +17,6 @@ from ..targets.network import unused_port
 from ..utils import NOT_SET, NotSet, is_url
 
 
-@attr.s()
 class BaseFuzzer(abc.ABC, Component):
     def get_entrypoint(self) -> Union[str, NotSet]:
         """Default docker-compose service entrypoint."""

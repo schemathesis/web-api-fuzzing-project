@@ -54,8 +54,11 @@ class ComponentMeta(abc.ABCMeta):
         return super().__new__(cls, name, bases, namespace, **kwargs)  # type: ignore
 
 
-@attr.s()
+@attr.s(init=False)
 class Component(metaclass=ComponentMeta):
+    def __init__(self, **kwargs: Any) -> None:
+        self.kwargs = kwargs
+
     @classproperty
     def path(self) -> pathlib.Path:
         """Path to the package directory."""

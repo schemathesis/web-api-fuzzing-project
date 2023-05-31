@@ -115,13 +115,7 @@ class BaseFuzzer(abc.ABC, Component):
         It is a common workflow for CLI.
         """
         try:
-            yield self.start(
-                schema,
-                base_url,
-                headers,
-                ssl_insecure,
-                build,
-            )
+            yield self.start(schema, base_url, headers, ssl_insecure, build, target)
         except subprocess.CalledProcessError as exc:
             sys.exit(exc.returncode)
         finally:

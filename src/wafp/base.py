@@ -123,7 +123,10 @@ class Component(metaclass=ComponentMeta):
             docker(["network", "rm", network])
         except subprocess.CalledProcessError as exc:
             # Ignore if network does not exist
-            if exc.stdout.decode("utf8") == f"Error: No such network: {network}\n":
+            if exc.stdout.decode("utf8") in (
+                f"Error: No such network: {network}\n",
+                f"Error response from daemon: network {network} not found\n",
+            ):
                 return
             raise
 

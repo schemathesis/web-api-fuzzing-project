@@ -10,6 +10,7 @@ RUN apt-get update \
     && groupadd test \
     && useradd --gid test --create-home --home-dir /home/test test \
     && apt-get install -y git \
+    && git config --global --add safe.directory /app \
     && git clone $repository /app \
     && pip install --no-cache-dir -r frozen-requirements.txt \
     && cd /app \

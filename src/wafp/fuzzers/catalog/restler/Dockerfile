@@ -4,6 +4,7 @@ ARG repository=https://github.com/microsoft/restler-fuzzer.git
 ARG revision=a0ba706a2156e31cf6053b639b57aa1b9acad442
 
 RUN apk add --no-cache git python3 \
+    && git config --global --add safe.directory /app \
     && git clone $repository /app \
     && cd /app \
     && git checkout $revision \

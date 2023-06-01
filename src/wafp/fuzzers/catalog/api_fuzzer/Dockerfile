@@ -7,6 +7,7 @@ LABEL name="APIFuzzer"
 
 RUN apt-get update \
     && apt-get install -y git libcurl4-openssl-dev libssl-dev build-essential \
+    && git config --global --add safe.directory /app \
     && git clone $repository /app \
     && cd /app \
     && git checkout $revision \

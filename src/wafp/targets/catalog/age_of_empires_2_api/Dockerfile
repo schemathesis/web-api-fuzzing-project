@@ -9,6 +9,7 @@ RUN apt-get update \
     && groupadd test \
     && useradd --gid test --create-home --home-dir /home/test test \
     && apt-get install -y git \
+    && git config --global --add safe.directory /app-tmp \
     && git clone $repository /app-tmp \
     && chown test -R /app-tmp \
     && cd /app-tmp \

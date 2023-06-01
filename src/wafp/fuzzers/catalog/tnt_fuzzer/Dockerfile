@@ -6,6 +6,7 @@ ARG revision=c1b333ced51d515e45827d7817a8004cadb98d45
 LABEL name="TnT-Fuzzer"
 
 RUN apk add --no-cache git \
+    && git config --global --add safe.directory /app \
     # The latest PyPI release is outdated - Python 2 only
     # Therefore building it manually, similarly to their Dockerfile
     # https://github.com/Teebytes/TnT-Fuzzer/blob/master/Dockerfile

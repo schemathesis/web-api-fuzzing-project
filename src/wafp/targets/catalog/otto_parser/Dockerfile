@@ -5,6 +5,7 @@ ARG revision=504d49884649b658dbce8828390a4e0b81450ad1
 
 RUN apt-get update \
     && apt-get install -y git \
+    && git config --global --add safe.directory /app \
     && git clone $repository /app \
     && cd /app \
     && git checkout $revision \

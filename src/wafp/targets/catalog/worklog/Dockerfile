@@ -5,6 +5,7 @@ ARG revision=14a176ef233c7996a37fcb24e72d5e2f03993f9a
 
 COPY requirements.txt frozen-requirements.txt
 RUN apk add --no-cache git gcc g++ make libffi-dev openssl-dev \
+    && git config --global --add safe.directory /app \
     && git clone $repository /app \
     && cd /app \
     && git checkout $revision \

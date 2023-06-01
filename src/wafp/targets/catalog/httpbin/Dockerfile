@@ -12,6 +12,7 @@ RUN apt-get update \
     && useradd --gid test --create-home --home-dir /home/test test \
     && apt-get install -y git python3-pip \
     && pip3 install --no-cache-dir -r /frozen-requirements.txt \
+    && git config --global --add safe.directory /app \
     && git clone $repository /app \
     && cd /app \
     && git checkout $revision \

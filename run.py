@@ -4,12 +4,14 @@ import pathlib
 from typing import Generator, Optional, Tuple
 
 import structlog
+from dotenv import load_dotenv
 
 from wafp.__main__ import main as run
 from wafp.fuzzers import loader as fuzzers_loader
 from wafp.targets import loader as targets_loader
 
 logger = structlog.get_logger()
+load_dotenv()
 
 COMBINATIONS = {
     "age_of_empires_2_api:Default": {

@@ -1,8 +1,10 @@
 import argparse
 import pathlib
-from typing import Optional
+from typing import Generator, Optional, Tuple
 
 from wafp.__main__ import main as run
+from wafp.fuzzers import loader as fuzzers_loader
+from wafp.targets import loader as targets_loader
 
 COMBINATIONS = {
     "age_of_empires_2_api:Default": {
@@ -142,6 +144,26 @@ COMBINATIONS = {
 }
 
 
+def split_name(name: str) -> Tuple[str, Optional[str]]:
+    return tuple(name.split(":", 1) + [None])[:2]  # type:ignore
+
+
+def is_match(value: str, expected: str) -> bool:
+    name, variant = split_name(value)
+    expected_name, expected_variant = split_name(expected)
+    return name == expected_name and (expected_variant is None or expected_variant == variant)
+
+
+def expand_options(options: Generator[str, None, None]) -> list[str]:
+    output = []
+    for option in options:
+        output.append(option)
+        name, variant = split_name(option)
+        if variant is not None:
+            output.append(name)
+    return output
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -156,6 +178,8 @@ def parse_args() -> argparse.Namespace:
         default=30,
         type=int,
     )
+    parser.add_argument("--fuzzer", choices=expand_options(fuzzers_loader.get_all_variants()), help="Fuzzer to run")
+    parser.add_argument("--target", choices=expand_options(targets_loader.get_all_variants()), help="Target to run")
     return parser.parse_args()
 
 
@@ -175,9 +199,13 @@ def main() -> None:
     assert args.iterations >= 0, "The number of iterations should be a positive integer"
     output_dir = pathlib.Path(args.output_dir).absolute()
     for target, data in COMBINATIONS.items():
+        if args.target and not is_match(target, args.target):
+            continue
         sentry_dsn: Optional[str] = data.get("sentry_dsn")  # type: ignore
         for fuzzer in data.get("fuzzers", ()):
-            for iteration in range(1, args.iterations):
+            if args.fuzzer and not is_match(fuzzer, args.fuzzer):
+                continue
+            for iteration in range(1, args.iterations + 1):
                 run_single(fuzzer, target, iteration, output_dir, sentry_dsn)
 
 

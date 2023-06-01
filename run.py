@@ -3,9 +3,13 @@ import os
 import pathlib
 from typing import Generator, Optional, Tuple
 
+import structlog
+
 from wafp.__main__ import main as run
 from wafp.fuzzers import loader as fuzzers_loader
 from wafp.targets import loader as targets_loader
+
+logger = structlog.get_logger()
 
 COMBINATIONS = {
     "age_of_empires_2_api:Default": {
@@ -221,6 +225,10 @@ def main() -> None:
         for fuzzer in data.get("fuzzers", ()):
             if args.fuzzer and not is_match(fuzzer, args.fuzzer):
                 continue
+            if sentry_dsn:
+                logger.info("Sentry is installed")
+            else:
+                logger.warn("Sentry is not installed")
             for iteration in range(1, args.iterations + 1):
                 run_single(fuzzer, target, iteration, output_dir, sentry_dsn)
 

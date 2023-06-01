@@ -1,4 +1,5 @@
 import argparse
+import os
 import pathlib
 from typing import Generator, Optional, Tuple
 
@@ -148,6 +149,21 @@ def split_name(name: str) -> Tuple[str, Optional[str]]:
     return tuple(name.split(":", 1) + [None])[:2]  # type:ignore
 
 
+def get_env_var_prefix(target: str) -> str:
+    name, _ = split_name(target)
+    return name.upper()
+
+
+def get_sentry_dsn_env_var_name(target: str) -> str:
+    prefix = get_env_var_prefix(target)
+    return f"{prefix}_SENTRY_DSN"
+
+
+def get_sentry_dsn(target: str) -> Optional[str]:
+    env_var_name = get_sentry_dsn_env_var_name(target)
+    return os.getenv(env_var_name)
+
+
 def is_match(value: str, expected: str) -> bool:
     name, variant = split_name(value)
     expected_name, expected_variant = split_name(expected)
@@ -201,7 +217,7 @@ def main() -> None:
     for target, data in COMBINATIONS.items():
         if args.target and not is_match(target, args.target):
             continue
-        sentry_dsn: Optional[str] = data.get("sentry_dsn")  # type: ignore
+        sentry_dsn = get_sentry_dsn(target)
         for fuzzer in data.get("fuzzers", ()):
             if args.fuzzer and not is_match(fuzzer, args.fuzzer):
                 continue

@@ -158,7 +158,7 @@ class APIWorkflow(schema.as_state_machine()):
         )
 
 TestCase = APIWorkflow.TestCase
-TestCase.settings = settings(max_examples={self.max_examples}, suppress_health_check=HealthCheck.all(), deadline=None)
+TestCase.settings = settings(max_examples={self.max_examples}, suppress_health_check=list(HealthCheck), deadline=None)
 """
             )
         )

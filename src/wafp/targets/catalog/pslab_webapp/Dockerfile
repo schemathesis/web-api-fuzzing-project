@@ -6,6 +6,7 @@ ARG revision=624e56fcae939b11e4e671e0fbde816a9e17162c
 LABEL name="pslab-webapp"
 
 COPY requirements.txt frozen-requirements.txt
+RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list
 RUN apt-get update \
     && groupadd test \
     && useradd --gid test --create-home --home-dir /home/test test \

@@ -33,7 +33,7 @@ It also automatically installs WAFP CLI to the current environment that is avail
 To run a fuzzer against a target, you need to pass their names in CLI:
 
 ```
-wafp schemathesis:Default jupyter_server --output-dir=./artifacts
+wafp schemathesis:Default jupyter_server:Default --output-dir=./artifacts
 ```
 
 The command above will run the `Default` variant of Schemathesis against the Jupyter Server target and will store
@@ -54,8 +54,6 @@ python run.py --output-dir=./artifacts --iterations=30
 It will run all the defined combinations for 30 times and store the artifacts in the `./artifacts` directory.
 The combinations are defined in the `COMBINATIONS` variable in the `run.py` file. It excludes combinations that are known
 to not work for some reason (usually due to fuzzer failures).
-
-Note, that the `run.py` file does not include the Sentry integration (see below).
 
 ## Fuzzing targets
 

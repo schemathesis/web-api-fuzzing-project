@@ -47,7 +47,7 @@ struct ExceptionData {
 }
 #[derive(Debug, serde::Deserialize)]
 struct RequestData {
-    method: String,
+    method: Option<String>,
     url: String,
 }
 
@@ -55,7 +55,7 @@ struct RequestData {
 struct ExceptionValue {
     r#type: String,
     value: Option<String>,
-    stacktrace: Stacktrace,
+    stacktrace: Option<Stacktrace>,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize, Clone)]
@@ -80,15 +80,8 @@ struct Frame {
 #[serde(untagged)]
 #[serde(rename_all(deserialize = "snake_case"))]
 enum Metadata {
-    Error {
-        filename: String,
-        function: String,
-        r#type: String,
-        value: String,
-    },
-    OnlyTitle {
-        title: String,
-    },
+    Error { r#type: String, value: String },
+    OnlyTitle { title: String },
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -166,90 +159,97 @@ fn should_be_skipped(event: &RawSentryEvent) -> bool {
 fn process_file(path: &PathBuf) -> Option<SentryEvent> {
     let file = File::open(path).expect("Can not open file");
     let raw_event: Result<RawSentryEvent, _> = serde_json::from_reader(file);
-    if let Ok(raw_event) = raw_event {
-        if should_be_skipped(&raw_event) {
-            return None;
-        }
-
-        let get_transaction = |tags: &[Tag]| -> Option<String> {
-            for tag in tags {
-                if tag.key == "transaction" {
-                    return Some(tag.value.clone());
-                }
+    match raw_event {
+        Ok(raw_event) => {
+            if should_be_skipped(&raw_event) {
+                return None;
             }
-            None
-        };
-        let transaction = get_transaction(&raw_event.tags);
 
-        let get_endpoint = |entries: &[Entry]| -> (Option<String>, Option<String>) {
-            for entry in entries {
-                match entry {
-                    Entry::Request {
-                        data: RequestData { method, url },
-                    } => {
-                        let path = Url::parse(url).expect("Invalid URL").path().to_owned();
-                        return (Some(method.clone()), Some(path));
+            let get_transaction = |tags: &[Tag]| -> Option<String> {
+                for tag in tags {
+                    if tag.key == "transaction" {
+                        return Some(tag.value.clone());
                     }
-                    Entry::Message | Entry::Breadcrumbs | Entry::Exception { .. } => continue,
                 }
-            }
-            // It may be a Gunicorn-level error that is logged differently
-            if let Some((_, path)) = raw_event.message.split_once("Error handling request ") {
+                None
+            };
+            let transaction = get_transaction(&raw_event.tags);
+
+            let get_endpoint = |entries: &[Entry]| -> (Option<String>, Option<String>) {
                 for entry in entries {
                     match entry {
-                        // The only place where we can get the HTTP method is local variables in one of the
-                        // stackframes
-                        Entry::Exception {
-                            data: ExceptionData { values },
+                        Entry::Request {
+                            data: RequestData { method, url },
                         } => {
-                            for ExceptionValue {
-                                stacktrace: Stacktrace { frames },
-                                ..
-                            } in values
-                            {
-                                for Frame { vars, .. } in frames {
-                                    if let Some(value) = vars["environ"]["REQUEST_METHOD"].as_str()
-                                    {
-                                        let method = &value[1..value.len() - 1];
-                                        return (Some(method.to_owned()), Some(path.to_owned()));
+                            if let Some(method) = method {
+                                let path = Url::parse(url).expect("Invalid URL").path().to_owned();
+                                return (Some(method.clone()), Some(path));
+                            }
+                        }
+                        Entry::Message | Entry::Breadcrumbs | Entry::Exception { .. } => continue,
+                    }
+                }
+                // It may be a Gunicorn-level error that is logged differently
+                if let Some((_, path)) = raw_event.message.split_once("Error handling request ") {
+                    for entry in entries {
+                        match entry {
+                            // The only place where we can get the HTTP method is local variables in one of the
+                            // stackframes
+                            Entry::Exception {
+                                data: ExceptionData { values },
+                            } => {
+                                for ExceptionValue { stacktrace, .. } in values {
+                                    if let Some(Stacktrace { frames }) = stacktrace {
+                                        for Frame { vars, .. } in frames {
+                                            if let Some(value) =
+                                                vars["environ"]["REQUEST_METHOD"].as_str()
+                                            {
+                                                let method = &value[1..value.len() - 1];
+                                                return (
+                                                    Some(method.to_owned()),
+                                                    Some(path.to_owned()),
+                                                );
+                                            }
+                                        }
                                     }
                                 }
                             }
+                            Entry::Message | Entry::Breadcrumbs | Entry::Request { .. } => continue,
                         }
+                    }
+                };
+                (None, None)
+            };
+            let (method, path) = get_endpoint(&raw_event.entries);
+
+            let exceptions = {
+                let mut out = Vec::new();
+                for entry in &raw_event.entries {
+                    match entry {
+                        Entry::Exception {
+                            data: ExceptionData { values },
+                        } => out.push(values.clone()),
                         Entry::Message | Entry::Breadcrumbs | Entry::Request { .. } => continue,
                     }
                 }
+                out
             };
-            (None, None)
-        };
-        let (method, path) = get_endpoint(&raw_event.entries);
 
-        let exceptions = {
-            let mut out = Vec::new();
-            for entry in &raw_event.entries {
-                match entry {
-                    Entry::Exception {
-                        data: ExceptionData { values },
-                    } => out.push(values.clone()),
-                    Entry::Message | Entry::Breadcrumbs | Entry::Request { .. } => continue,
-                }
-            }
-            out
-        };
-
-        Some(SentryEvent {
-            event_id: raw_event.event_id,
-            group_id: raw_event.group_id,
-            title: raw_event.title,
-            message: raw_event.message,
-            culprit: raw_event.culprit,
-            transaction,
-            method,
-            path,
-            exceptions,
-            metadata: raw_event.metadata,
-        })
-    } else {
-        panic!("Invalid file: {:?}", path);
+            Some(SentryEvent {
+                event_id: raw_event.event_id,
+                group_id: raw_event.group_id,
+                title: raw_event.title,
+                message: raw_event.message,
+                culprit: raw_event.culprit,
+                transaction,
+                method,
+                path,
+                exceptions,
+                metadata: raw_event.metadata,
+            })
+        }
+        Err(error) => {
+            panic!("Invalid file: {:?} ({})", path, error);
+        }
     }
 }

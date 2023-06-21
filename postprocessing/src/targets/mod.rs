@@ -108,30 +108,27 @@ impl FromStr for Target {
     type Err = TargetError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let Some((target, kind)) = s.split_once(':') {
-            let kind = TargetKind::from_str(kind)?;
-            match target {
-                "age_of_empires_2_api" => Ok(Target::AgeOfEmpires2Api(kind)),
-                "cccatalog_api" => Ok(Target::CcccatalogApi(kind)),
-                "covid19_japan_web_api" => Ok(Target::Covid19JapanWebApi(kind)),
-                "disease_sh" => Ok(Target::DiseaseSh(kind)),
-                "gitlab" => Ok(Target::GitLab(kind)),
-                "httpbin" => Ok(Target::HttpBin(kind)),
-                "jupyter_server" => Ok(Target::JupyterServer(kind)),
-                "jupyterhub" => Ok(Target::JupyterHub(kind)),
-                "mailhog" => Ok(Target::MailHog(kind)),
-                "open_fec" => Ok(Target::OpenFec(kind)),
-                "opentopodata" => Ok(Target::OpenTopoData(kind)),
-                "otto_parser" => Ok(Target::OttoParser(kind)),
-                "pslab_webapp" => Ok(Target::PslabWebapp(kind)),
-                "pulpcore" => Ok(Target::Pulpcore(kind)),
-                "request_baskets" => Ok(Target::RequestBaskets(kind)),
-                "restler_demo" => Ok(Target::RestlerDemo(kind)),
-                "worklog" => Ok(Target::Worklog(kind)),
-                _ => Err(Self::Err::UnknownTarget(s.to_string())),
-            }
-        } else {
-            Err(Self::Err::UnknownTarget(s.to_string()))
+        let (target, kind) = s.split_once(':').unwrap_or_else(|| (s, "Default"));
+        let kind = TargetKind::from_str(kind)?;
+        match target {
+            "age_of_empires_2_api" => Ok(Target::AgeOfEmpires2Api(kind)),
+            "cccatalog_api" => Ok(Target::CcccatalogApi(kind)),
+            "covid19_japan_web_api" => Ok(Target::Covid19JapanWebApi(kind)),
+            "disease_sh" => Ok(Target::DiseaseSh(kind)),
+            "gitlab" => Ok(Target::GitLab(kind)),
+            "httpbin" => Ok(Target::HttpBin(kind)),
+            "jupyter_server" => Ok(Target::JupyterServer(kind)),
+            "jupyterhub" => Ok(Target::JupyterHub(kind)),
+            "mailhog" => Ok(Target::MailHog(kind)),
+            "open_fec" => Ok(Target::OpenFec(kind)),
+            "opentopodata" => Ok(Target::OpenTopoData(kind)),
+            "otto_parser" => Ok(Target::OttoParser(kind)),
+            "pslab_webapp" => Ok(Target::PslabWebapp(kind)),
+            "pulpcore" => Ok(Target::Pulpcore(kind)),
+            "request_baskets" => Ok(Target::RequestBaskets(kind)),
+            "restler_demo" => Ok(Target::RestlerDemo(kind)),
+            "worklog" => Ok(Target::Worklog(kind)),
+            _ => Err(Self::Err::UnknownTarget(s.to_string())),
         }
     }
 }

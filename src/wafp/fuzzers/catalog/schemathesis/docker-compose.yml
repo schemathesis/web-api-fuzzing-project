@@ -1,8 +1,15 @@
 version: '3'
 services:
   fuzzer:
-    image: schemathesis/schemathesis:v3.19.5
-    init: true
+    build:
+      context: .
+      args:
+        - EXTRA_REQUIREMENTS=${EXTRA_REQUIREMENTS}
     network_mode: host
     environment:
+      - SCHEMATHESIS_HOOKS=hooks
       - SCHEMATHESIS_API_NAME
+      - SCHEMATHESIS_DISABLE_SWARM_TESTING
+      - SCHEMATHESIS_DISABLE_FORMAT_STRATEGIES
+      - SCHEMATHESIS_USE_LESS_SCHEMA_PRE_PROCESSING
+      - EXTRA_REQUIREMENTS

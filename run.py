@@ -13,136 +13,105 @@ from wafp.targets import loader as targets_loader
 logger = structlog.get_logger()
 load_dotenv()
 
+BASIC_SCHEMATHESIS = (
+    "schemathesis:AllChecks",
+    "schemathesis:Default",
+    "schemathesis:LessPreProcessing",
+    "schemathesis:Negative",
+    "schemathesis:NegativeNoSwarm",
+    "schemathesis:NoFormats",
+    "schemathesis:NoMutations",
+)
+
 COMBINATIONS = {
     "age_of_empires_2_api:Default": {
         "fuzzers": [
             "api_fuzzer",
             "got_swag",
             "restler",
-            "schemathesis:AllChecks",
-            "schemathesis:Default",
-            "schemathesis:Negative",
+            *BASIC_SCHEMATHESIS,
         ],
     },
-    "age_of_empires_2_api:Linked": {
-        "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
-    },
+    # "age_of_empires_2_api:Linked": {
+    #     "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
+    # },
     "cccatalog_api:Default": {
-        "fuzzers": ["got_swag", "restler", "schemathesis:AllChecks", "schemathesis:Default", "schemathesis:Negative"],
+        "fuzzers": ["got_swag", "restler", *BASIC_SCHEMATHESIS],
     },
-    "cccatalog_api:Linked": {
-        "fuzzers": ["schemathesis:StatefulNew"],
-    },
+    # "cccatalog_api:Linked": {
+    #     "fuzzers": ["schemathesis:StatefulNew"],
+    # },
     "covid19_japan_web_api:Default": {
         "fuzzers": [
             "api_fuzzer",
             "cats",
             "restler",
-            "schemathesis:AllChecks",
-            "schemathesis:Default",
-            "schemathesis:Negative",
+            *BASIC_SCHEMATHESIS,
         ],
     },
-    "covid19_japan_web_api:Linked": {
-        "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
-    },
-    "disease_sh:Default": {
-        "fuzzers": ["api_fuzzer", "cats", "schemathesis:AllChecks", "schemathesis:Default", "schemathesis:Negative"]
-    },
-    "disease_sh:Linked": {"fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"]},
-    "httpbin": {
-        "fuzzers": ["api_fuzzer", "schemathesis:AllChecks", "schemathesis:Default", "schemathesis:Negative"],
-    },
+    # "covid19_japan_web_api:Linked": {
+    #     "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
+    # },
+    "disease_sh:Default": {"fuzzers": ["api_fuzzer", "cats", *BASIC_SCHEMATHESIS]},
+    # "disease_sh:Linked": {"fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"]},
+    # "httpbin": {
+    #     "fuzzers": ["api_fuzzer", "schemathesis:AllChecks", "schemathesis:Default", "schemathesis:LessPreProcessing","schemathesis:Negative", "schemathesis:NegativeNoSwarm","schemathesis:NoFormats","schemathesis:NoMutations"],
+    # },
     "jupyter_server:Default": {
-        "fuzzers": ["cats", "restler", "schemathesis:AllChecks", "schemathesis:Default", "schemathesis:Negative"],
+        "fuzzers": ["cats", "restler", *BASIC_SCHEMATHESIS],
     },
-    "jupyter_server:Linked": {
-        "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
-    },
+    # "jupyter_server:Linked": {
+    #     "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
+    # },
     "jupyterhub:Default": {
-        "fuzzers": ["schemathesis:AllChecks", "schemathesis:Default", "schemathesis:Negative"],
+        "fuzzers": [*BASIC_SCHEMATHESIS],
     },
-    "jupyterhub:Linked": {
-        "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
-    },
-    "mailhog": {
-        "fuzzers": [
-            "api_fuzzer",
-            "cats",
-            "restler",
-            "schemathesis:AllChecks",
-            "schemathesis:Default",
-            "schemathesis:Negative",
-        ]
-    },
-    "open_fec:Default": {
-        "fuzzers": [
-            "api_fuzzer",
-            "cats",
-            "fuzz_lightyear",
-            "got_swag",
-            "restler",
-            "schemathesis:AllChecks",
-            "schemathesis:Default",
-            "schemathesis:Negative",
-            "swagger_fuzzer",
-        ],
-    },
-    "open_fec:Linked": {
-        "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
-    },
+    # "jupyterhub:Linked": {
+    #     "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
+    # },
+    "mailhog": {"fuzzers": ["api_fuzzer", "cats", "restler", *BASIC_SCHEMATHESIS]},
+    # "open_fec:Default": {
+    #     "fuzzers": [
+    #         "api_fuzzer",
+    #         "cats",
+    #         "fuzz_lightyear",
+    #         "got_swag",
+    #         "restler",
+    #         "schemathesis:AllChecks",
+    #         "schemathesis:Default",
+    #         "schemathesis:Negative",
+    #         "swagger_fuzzer",
+    #     ],
+    # },
+    # "open_fec:Linked": {
+    #     "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
+    # },
     "opentopodata": {
-        "fuzzers": [
-            "api_fuzzer",
-            "cats",
-            "restler",
-            "schemathesis:AllChecks",
-            "schemathesis:Default",
-            "schemathesis:Negative",
-        ],
+        "fuzzers": ["api_fuzzer", "cats", "restler", *BASIC_SCHEMATHESIS],
     },
-    "otto_parser": {"fuzzers": ["schemathesis:AllChecks", "schemathesis:Default", "schemathesis:Negative"]},
+    "otto_parser": {"fuzzers": [*BASIC_SCHEMATHESIS]},
     "pslab_webapp": {
-        "fuzzers": [
-            "api_fuzzer",
-            "cats",
-            "fuzz_lightyear",
-            "restler",
-            "schemathesis:AllChecks",
-            "schemathesis:Default",
-            "schemathesis:Negative",
-        ],
+        "fuzzers": ["api_fuzzer", "cats", "fuzz_lightyear", "restler", *BASIC_SCHEMATHESIS],
     },
     "pulpcore": {
         "fuzzers": [
             "api_fuzzer",
             "cats",
             "got_swag",
-            "schemathesis:AllChecks",
-            "schemathesis:Default",
-            "schemathesis:Negative",
+            *BASIC_SCHEMATHESIS,
             "tnt_fuzzer",
         ],
     },
-    "request_baskets:Default": {
-        "fuzzers": [
-            "api_fuzzer",
-            "cats",
-            "restler",
-            "schemathesis:AllChecks",
-            "schemathesis:Default",
-            "schemathesis:Negative",
-        ]
-    },
-    "request_baskets:Linked": {"fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"]},
+    "request_baskets:Default": {"fuzzers": ["api_fuzzer", "cats", "restler", *BASIC_SCHEMATHESIS]},
+    # "request_baskets:Linked": {"fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"]},
     "restler_demo:Default": {
-        "fuzzers": ["got_swag", "restler", "schemathesis:AllChecks", "schemathesis:Default", "schemathesis:Negative"],
+        "fuzzers": ["got_swag", "restler", *BASIC_SCHEMATHESIS],
     },
     "restler_demo:Linked": {
         "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
     },
     "worklog:Default": {
-        "fuzzers": ["api_fuzzer", "restler", "schemathesis:AllChecks", "schemathesis:Default", "schemathesis:Negative"],
+        "fuzzers": ["api_fuzzer", "restler", *BASIC_SCHEMATHESIS],
     },
     "worklog:Linked": {
         "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],

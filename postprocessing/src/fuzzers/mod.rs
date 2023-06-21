@@ -45,7 +45,11 @@ pub enum Fuzzer {
 pub enum SchemathesisKind {
     Default,
     AllChecks,
+    LessPreProcessing,
     Negative,
+    NegativeNoSwarm,
+    NoFormats,
+    NoMutations,
     StatefulOld,
     StatefulNew,
 }
@@ -55,7 +59,11 @@ impl fmt::Display for SchemathesisKind {
         match self {
             SchemathesisKind::Default => f.write_str("Default"),
             SchemathesisKind::AllChecks => f.write_str("AllChecks"),
+            SchemathesisKind::LessPreProcessing => f.write_str("LessPreProcessing"),
             SchemathesisKind::Negative => f.write_str("Negative"),
+            SchemathesisKind::NegativeNoSwarm => f.write_str("NegativeNoSwarm"),
+            SchemathesisKind::NoFormats => f.write_str("NoFormats"),
+            SchemathesisKind::NoMutations => f.write_str("NoMutations"),
             SchemathesisKind::StatefulOld => f.write_str("StatefulOld"),
             SchemathesisKind::StatefulNew => f.write_str("StatefulNew"),
         }
@@ -82,7 +90,15 @@ impl FromStr for Fuzzer {
             "tnt_fuzzer" => Ok(Fuzzer::TntFuzzer),
             "schemathesis:Default" => Ok(Fuzzer::Schemathesis(SchemathesisKind::Default)),
             "schemathesis:AllChecks" => Ok(Fuzzer::Schemathesis(SchemathesisKind::AllChecks)),
+            "schemathesis:LessPreProcessing" => {
+                Ok(Fuzzer::Schemathesis(SchemathesisKind::LessPreProcessing))
+            }
             "schemathesis:Negative" => Ok(Fuzzer::Schemathesis(SchemathesisKind::Negative)),
+            "schemathesis:NegativeNoSwarm" => {
+                Ok(Fuzzer::Schemathesis(SchemathesisKind::NegativeNoSwarm))
+            }
+            "schemathesis:NoFormats" => Ok(Fuzzer::Schemathesis(SchemathesisKind::NoFormats)),
+            "schemathesis:NoMutations" => Ok(Fuzzer::Schemathesis(SchemathesisKind::NoMutations)),
             "schemathesis:StatefulOld" => Ok(Fuzzer::Schemathesis(SchemathesisKind::StatefulOld)),
             "schemathesis:StatefulNew" => Ok(Fuzzer::Schemathesis(SchemathesisKind::StatefulNew)),
             "restler" => Ok(Fuzzer::Restler),

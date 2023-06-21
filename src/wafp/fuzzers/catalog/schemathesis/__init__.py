@@ -62,6 +62,7 @@ class Default(BaseSchemathesisFuzzer):
         if self.api_name is not None:
             # This is a bit more convenient, as `API_NAME` is an optional positional argument to Schemathesis
             env["SCHEMATHESIS_API_NAME"] = self.api_name
+        env["EXTRA_REQUIREMENTS"] = "empty-requirements.txt"
         return env
 
 
@@ -82,6 +83,13 @@ class AllChecks(Default):
         return args
 
 
+class NoMutations(Default):
+    def get_environment_variables(self) -> Dict[str, str]:
+        env = super().get_environment_variables()
+        env["EXTRA_REQUIREMENTS"] = "ablation-mutation-requirements.txt"
+        return env
+
+
 class Negative(Default):
     def get_entrypoint_args(
         self, context: FuzzerContext, schema: str, base_url: str, headers: Dict[str, str], ssl_insecure: bool = False
@@ -89,6 +97,27 @@ class Negative(Default):
         args = super().get_entrypoint_args(context, schema, base_url, headers, ssl_insecure)
         args.append("--data-generation-method=negative")
         return args
+
+
+class NegativeNoSwarm(Negative):
+    def get_environment_variables(self) -> Dict[str, str]:
+        env = super().get_environment_variables()
+        env["SCHEMATHESIS_DISABLE_SWARM_TESTING"] = "true"
+        return env
+
+
+class NoFormats(Default):
+    def get_environment_variables(self) -> Dict[str, str]:
+        env = super().get_environment_variables()
+        env["SCHEMATHESIS_DISABLE_FORMAT_STRATEGIES"] = "true"
+        return env
+
+
+class LessPreProcessing(Default):
+    def get_environment_variables(self) -> Dict[str, str]:
+        env = super().get_environment_variables()
+        env["SCHEMATHESIS_USE_LESS_SCHEMA_PRE_PROCESSING"] = "true"
+        return env
 
 
 class Fast(Default):

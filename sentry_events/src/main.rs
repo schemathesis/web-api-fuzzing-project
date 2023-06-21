@@ -79,15 +79,21 @@ fn load_events(url: &str, token: &str, target: &str, runs: &HashMap<String, Path
     println!("Loading: {}", target);
     let client = reqwest::blocking::Client::new();
     let mut count = 1;
-    if let (Some(mut next), true) = make_call(
+    let parsed = reqwest::Url::parse(url).expect("Invalid URL");
+    if let (Some(next), true) = make_call(
         &client,
         &format!("{}api/0/projects/sentry/{}/events/?full=true", url, target),
         token,
         runs,
     ) {
+        let mut next = reqwest::Url::parse(&next).expect("Invalid URL");
+        next.set_port(parsed.port()).expect("Invalid port");
+        let mut next = next.to_string();
         while let (Some(nxt), true) = make_call(&client, &next, token, runs) {
             println!("{} call #{}", target, count);
-            next = nxt;
+            let mut nxt = reqwest::Url::parse(&nxt).expect("Invalid URL");
+            nxt.set_port(parsed.port()).expect("Invalid port");
+            next = nxt.to_string();
             count += 1;
         }
         println!("Finished {}!", target);

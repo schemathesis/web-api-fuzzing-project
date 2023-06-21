@@ -49,6 +49,7 @@ pub(crate) enum Status {
     Success,
     /// Schemathesis found some failures.
     Failure,
+    Skip,
     /// Internal Schemathesis error.
     Error,
 }
@@ -198,6 +199,10 @@ struct StdoutEntry<'a> {
     failures: HashMap<&'static str, u16>,
 }
 
+const HTTP_METHODS: &[&str] = &[
+    "GET ", "PUT ", "POST ", "DELETE ", "OPTIONS ", "HEAD ", "PATCH ", "TRACE ",
+];
+
 pub(crate) fn get_deduplicated_results(directory: &Path, out_directory: &PathBuf) {
     let path = directory.join("stdout.txt");
     let content = read_to_string(path).expect("Failed to read stdout.txt");
@@ -206,9 +211,13 @@ pub(crate) fn get_deduplicated_results(directory: &Path, out_directory: &PathBuf
     }
     let mut lines = content
         .lines()
+        .skip_while(|line| line.trim() != "FAILURES")
         .filter_map(|l| {
             let trimmed = l.trim();
-            if trimmed.ends_with("[P]") || trimmed.ends_with("[N]") || STDOUT_FAILURE_RE.is_match(l)
+            if HTTP_METHODS
+                .iter()
+                .any(|method| trimmed.starts_with(method))
+                || STDOUT_FAILURE_RE.is_match(l)
             {
                 Some(trimmed)
             } else {
@@ -221,7 +230,11 @@ pub(crate) fn get_deduplicated_results(directory: &Path, out_directory: &PathBuf
     let mut ser = serde_json::Serializer::new(output_file);
     let mut seq = ser.serialize_seq(None).unwrap();
     while let Some(line) = lines.next() {
-        if line.ends_with("[P]") || line.ends_with("[N]") {
+        let trimmed = line.trim();
+        if HTTP_METHODS
+            .iter()
+            .any(|method| trimmed.starts_with(method))
+        {
             // New endpoint
             let mut parts = line.split_ascii_whitespace();
             let method = parts.next().unwrap();
@@ -251,10 +264,10 @@ pub(crate) fn get_deduplicated_results(directory: &Path, out_directory: &PathBuf
                     } else if UNEXPECTED_CONTENT_TYPE.captures(next).is_some() {
                         seq.serialize_element(&TestCase::content_type_conformance(method, path))
                             .unwrap();
-                    } else if next.contains("Response is missing the `Content-Type` header") {
+                    } else if next.contains("response is missing the `Content-Type` header") {
                         seq.serialize_element(&TestCase::missing_content_type(method, path))
                             .unwrap();
-                    } else if next.contains("Malformed media type") {
+                    } else if next.contains("malformed media type") {
                         seq.serialize_element(&TestCase::malformed_media_type(method, path))
                             .unwrap();
                     } else {

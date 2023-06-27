@@ -70,19 +70,17 @@ COMBINATIONS = {
     #     "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
     # },
     "mailhog": {"fuzzers": ["api_fuzzer", "cats", "restler", *BASIC_SCHEMATHESIS]},
-    # "open_fec:Default": {
-    #     "fuzzers": [
-    #         "api_fuzzer",
-    #         "cats",
-    #         "fuzz_lightyear",
-    #         "got_swag",
-    #         "restler",
-    #         "schemathesis:AllChecks",
-    #         "schemathesis:Default",
-    #         "schemathesis:Negative",
-    #         "swagger_fuzzer",
-    #     ],
-    # },
+    "open_fec:Default": {
+        "fuzzers": [
+            "api_fuzzer",
+            "cats",
+            "fuzz_lightyear",
+            "got_swag",
+            "restler",
+            *BASIC_SCHEMATHESIS,
+            "swagger_fuzzer",
+        ],
+    },
     # "open_fec:Linked": {
     #     "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
     # },
@@ -107,16 +105,16 @@ COMBINATIONS = {
     "restler_demo:Default": {
         "fuzzers": ["got_swag", "restler", *BASIC_SCHEMATHESIS],
     },
-    "restler_demo:Linked": {
-        "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
-    },
+    # "restler_demo:Linked": {
+    #     "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
+    # },
     "worklog:Default": {
         "fuzzers": ["api_fuzzer", "restler", *BASIC_SCHEMATHESIS],
     },
-    "worklog:Linked": {
-        "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
-    },
-    "gitlab": {"fuzzers": ["schemathesis:Default"]},
+    # "worklog:Linked": {
+    #     "fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"],
+    # },
+    # "gitlab": {"fuzzers": ["schemathesis:Default"]},
 }
 
 

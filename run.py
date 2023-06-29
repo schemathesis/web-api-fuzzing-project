@@ -54,9 +54,9 @@ COMBINATIONS = {
     # },
     "disease_sh:Default": {"fuzzers": ["api_fuzzer", "cats", *BASIC_SCHEMATHESIS]},
     # "disease_sh:Linked": {"fuzzers": ["schemathesis:StatefulNew", "schemathesis:StatefulOld"]},
-    # "httpbin": {
-    #     "fuzzers": ["api_fuzzer", "schemathesis:AllChecks", "schemathesis:Default", "schemathesis:LessPreProcessing","schemathesis:Negative", "schemathesis:NegativeNoSwarm","schemathesis:NoFormats","schemathesis:NoMutations"],
-    # },
+    "httpbin": {
+        "fuzzers": ["api_fuzzer", *BASIC_SCHEMATHESIS],
+    },
     "jupyter_server:Default": {
         "fuzzers": ["cats", "restler", *BASIC_SCHEMATHESIS],
     },
